@@ -17,39 +17,61 @@ type POM struct {
 	Version string   `xml:"version"`
 }
 
+var (
+	commitMessageFile string
+	debug             bool
+)
+
 func main() {
-	branchName, err := CurrentBranchName()
+	if os.Args[0] == "pre-commit" {
+		commitMessageFile = os.Args[1]
+	}
+	debug = os.Getenv("BRANCHCHECK_DEBUG") == "true"
+
+	branch, err := CurrentBranch()
 	if err != nil {
-		fmt.Printf("Cannot determine current branch name\n", err)
+		fmt.Fprintf(os.Stderr, "Cannot determine current branch name\n", err)
 		return
+	}
+	if branch == "HEAD" {
+		fmt.Fprintf(os.Stderr, "You are not on a branch.  Returning.\n")
+		return
+	}
+	if debug {
+		fmt.Fprintf(os.Stderr, "Validating branch %s\n", branch)
 	}
 
 	poms, err := FindPoms()
-	if err != nil {
-		fmt.Printf("Cannot find POMs\n", err)
+	if err != nil || len(poms) == 0 {
+		fmt.Fprintf(os.Stderr, "Cannot find POMs\n", err)
 		return
 	}
 
 	for _, pom := range poms {
 		data, err := ioutil.ReadFile(pom)
 		if err != nil {
-			fmt.Printf("Error reading %s: %v\n", pom, err)
+			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", pom, err)
 			continue
 		}
+
+		if debug {
+			fmt.Fprintf(os.Stderr, "Analyzing %s\n", pom)
+		}
+
 		var pom POM
 		reader := bytes.NewBuffer(data)
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-			fmt.Printf("error parsing pom.xml: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error parsing pom.xml: %v\n", err)
 			continue
 		}
-		if branchName == "develop" && !IsValidDevelopVersion(pom.Version) {
-			fmt.Printf("invalid develop branch version %s in %s\n", pom.Version, pom)
+		if branch == "develop" && !IsValidDevelopVersion(pom.Version) {
+			fmt.Fprintf(os.Stderr, "invalid develop branch version %s in %s\n", pom.Version, pom)
 			os.Exit(-1)
 		}
 	}
 }
 
-func CurrentBranchName() (string, error) {
+func CurrentBranch() (string, error) {
 	command := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if data, err := command.Output(); err != nil {
 		return "", err
@@ -59,7 +81,10 @@ func CurrentBranchName() (string, error) {
 }
 
 func IsFeatureBranch(branch string) bool {
-	b := strings.HasPrefix(branch, "feature/") || strings.HasPrefix(branch, "bug/")
+	b := strings.Index(branch, "/") != -1
+	if debug {
+		fmt.Fprintf(os.Stderr, "%s is a feature branch: %v\n", branch, b)
+	}
 	return b
 }
 
@@ -72,6 +97,9 @@ func IsValidFeatureVersion(branch, version string) bool {
 	version = strings.Replace(version, "_", "", -1)
 	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
 	match, _ := regexp.MatchString(regex, version)
+	if debug {
+		fmt.Fprintf(os.Stderr, "%s is a branch compatible with version %s\n", branch, version)
+	}
 	return match
 }
 
