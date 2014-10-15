@@ -23,6 +23,7 @@ var (
 )
 
 func main() {
+	fmt.Printf("arg0: %s\n", os.Args[0])
 	if os.Args[0] == "pre-commit" {
 		commitMessageFile = os.Args[1]
 	}
