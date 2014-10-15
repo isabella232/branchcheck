@@ -45,15 +45,15 @@ func main() {
 		return
 	}
 
-	for _, pom := range poms {
-		data, err := ioutil.ReadFile(pom)
+	for _, pomFile := range poms {
+		data, err := ioutil.ReadFile(pomFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", pom, err)
+			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", pomFile, err)
 			continue
 		}
 
 		if debug {
-			fmt.Fprintf(os.Stderr, "Analyzing %s\n", pom)
+			fmt.Fprintf(os.Stderr, "Analyzing %s\n", pomFile)
 		}
 
 		var pom POM
@@ -63,7 +63,11 @@ func main() {
 			continue
 		}
 		if branch == "develop" && !IsValidDevelopVersion(pom.Version) {
-			fmt.Fprintf(os.Stderr, "invalid develop branch version %s in %s\n", pom.Version, pom)
+			fmt.Fprintf(os.Stderr, "invalid develop branch version %s in %s\n", pom.Version, pomFile)
+			os.Exit(-1)
+		}
+		if IsFeatureBranch(branch) && !IsValidFeatureVersion(branch, pom.Version) {
+			fmt.Fprintf(os.Stderr, "feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
 			os.Exit(-1)
 		}
 	}
