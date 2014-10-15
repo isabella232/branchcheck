@@ -21,9 +21,11 @@ var (
 	debug bool
 )
 
-func main() {
+func init() {
 	debug = os.Getenv("BRANCHCHECK_DEBUG") == "true"
+}
 
+func main() {
 	branch, err := CurrentBranch()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot determine current branch name\n", err)
@@ -68,7 +70,12 @@ func main() {
 }
 
 func CurrentBranch() (string, error) {
-	command := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd := "git"
+	args := []string{"rev-parse", "--abbrev-ref", "HEAD"}
+	if debug {
+		fmt.Fprintf(os.Stderr, "%s %v\n", cmd, args)
+	}
+	command := exec.Command(cmd, args...)
 	if data, err := command.Output(); err != nil {
 		return "", err
 	} else {
