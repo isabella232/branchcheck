@@ -29,10 +29,10 @@ func main() {
 		return
 	}
 
-	for _, f := range poms {
-		data, err := ioutil.ReadFile(f)
+	for _, pom := range poms {
+		data, err := ioutil.ReadFile(pom)
 		if err != nil {
-			fmt.Printf("Error reading %s: %v\n", f, err)
+			fmt.Printf("Error reading %s: %v\n", pom, err)
 			return
 		}
 		var pom POM
@@ -41,7 +41,7 @@ func main() {
 			fmt.Printf("error parsing pom.xml: %v\n", err)
 		}
 		if branchName == "develop" && !IsValidDevelopVersion(pom.Version) {
-			fmt.Printf("invalid develop branch version %s in %s\n", pom.Version, f)
+			fmt.Printf("invalid develop branch version %s in %s\n", pom.Version, pom)
 			os.Exit(-1)
 		}
 	}
@@ -63,15 +63,15 @@ func IsValidDevelopVersion(version string) bool {
 
 func FindPoms() ([]string, error) {
 	files := make([]string, 0)
-	err := filepath.Walk(".", filepath.WalkFunc(func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if path == "pom.xml" {
+		if info.Name() == "pom.xml" {
 			files = append(files, path)
 		}
 		return nil
-	}))
+	})
 	if err != nil {
 		return nil, err
 	}
