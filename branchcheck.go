@@ -18,15 +18,10 @@ type POM struct {
 }
 
 var (
-	commitMessageFile string
-	debug             bool
+	debug bool
 )
 
 func main() {
-	fmt.Printf("arg0: %s\n", os.Args[0])
-	if os.Args[0] == "pre-commit" {
-		commitMessageFile = os.Args[1]
-	}
 	debug = os.Getenv("BRANCHCHECK_DEBUG") == "true"
 
 	branch, err := CurrentBranch()
