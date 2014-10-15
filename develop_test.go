@@ -13,7 +13,7 @@ func TestDevelopVersion(t *testing.T) {
 }
 
 func TestInvalidDevelopVersion(t *testing.T) {
-	versions := []string{"1.0-us_feature-SNAPSHOT", "2.14-bug_77-SNAPSHOT"}
+	versions := []string{"1.0-us_feature-SNAPSHOT", "2.14-bug_77-SNAPSHOT", "1.0"}
 	for _, version := range versions {
 		b := IsValidDevelopVersion(version)
 		if b {
