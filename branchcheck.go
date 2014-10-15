@@ -96,6 +96,9 @@ func IsFeatureBranch(branch string) bool {
 }
 
 func IsValidFeatureVersion(branch, version string) bool {
+	if version == "" {
+		return true
+	}
 	parts := strings.Split(branch, "/")
 	if len(parts) != 2 {
 		return true
@@ -111,6 +114,9 @@ func IsValidFeatureVersion(branch, version string) bool {
 }
 
 func IsValidDevelopVersion(version string) bool {
+	if version == "" {
+		return true
+	}
 	match, _ := regexp.MatchString("[1-9]+(\\.[0-9]+)+-SNAPSHOT", version)
 	return match
 }
