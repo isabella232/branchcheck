@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 type POM struct {
@@ -25,7 +26,7 @@ func main() {
 
 	poms, err := FindPoms()
 	if err != nil {
-		fmt.Printf("Cannot determine current branch name\n", err)
+		fmt.Printf("Cannot find POMs\n", err)
 		return
 	}
 
@@ -33,12 +34,13 @@ func main() {
 		data, err := ioutil.ReadFile(pom)
 		if err != nil {
 			fmt.Printf("Error reading %s: %v\n", pom, err)
-			return
+			continue
 		}
 		var pom POM
 		reader := bytes.NewBuffer(data)
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
 			fmt.Printf("error parsing pom.xml: %v\n", err)
+			continue
 		}
 		if branchName == "develop" && !IsValidDevelopVersion(pom.Version) {
 			fmt.Printf("invalid develop branch version %s in %s\n", pom.Version, pom)
@@ -56,8 +58,25 @@ func CurrentBranchName() (string, error) {
 	}
 }
 
+func IsFeatureBranch(branch string) bool {
+	b := strings.HasPrefix(branch, "feature/") || strings.HasPrefix(branch, "bug/")
+	return b
+}
+
+func IsValidFeatureVersion(branch, version string) bool {
+	parts := strings.Split(branch, "/")
+	if len(parts) != 2 {
+		return true
+	}
+	story := strings.ToLower(parts[1])
+	version = strings.Replace(version, "_", "", -1)
+	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
+	match, _ := regexp.MatchString(regex, version)
+	return match
+}
+
 func IsValidDevelopVersion(version string) bool {
-	match, _ := regexp.MatchString("[1-9]+\\.[0-9]+-SNAPSHOT", version)
+	match, _ := regexp.MatchString("[1-9]+(\\.[0-9]+)+-SNAPSHOT", version)
 	return match
 }
 
