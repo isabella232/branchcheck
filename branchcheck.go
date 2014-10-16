@@ -61,16 +61,20 @@ func main() {
 		var pom POM
 		reader := bytes.NewBuffer(data)
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-			log.Printf("error parsing pom.xml: %v\n", err)
+			log.Printf("error parsing pom.xml %s: %v\n", pomFile, err)
 			continue
 		}
-		// An inherited <version>
-		if pom.Version == "" {
+		// An inherited <version> will have pom.Version==""
+		if pom.Version == "" || branch == "master" {
 			continue
 		}
-		if branch == "develop" && !IsValidDevelopVersion(pom.Version) {
-			log.Printf("invalid develop branch version %s in %s\n", pom.Version, pomFile)
-			os.Exit(-1)
+		if branch == "develop" {
+			if !IsValidDevelopVersion(pom.Version) {
+				log.Printf("invalid develop branch version %s in %s\n", pom.Version, pomFile)
+				os.Exit(-1)
+			} else {
+				continue
+			}
 		}
 		if IsFeatureBranch(branch) && !IsValidFeatureVersion(branch, pom.Version) {
 			log.Printf("feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
