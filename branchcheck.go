@@ -104,7 +104,7 @@ func IsValidFeatureVersion(branch, version string) bool {
 	}
 	story := strings.ToLower(parts[1])
 
-	// normalize from a.b.c-us_xyz to a.b.c-usxyz
+	// normalize from a.b.c-us_xyz-SNAPSHOT to a.b.c-usxyz-SNAPSHOT
 	version = strings.Replace(version, "_", "", -1)
 
 	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
