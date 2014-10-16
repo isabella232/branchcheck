@@ -72,11 +72,10 @@ func main() {
 			if !IsValidDevelopVersion(pom.Version) {
 				log.Printf("invalid develop branch version %s in %s\n", pom.Version, pomFile)
 				os.Exit(-1)
-			} else {
-				continue
 			}
+			continue
 		}
-		if IsFeatureBranch(branch) && !IsValidFeatureVersion(branch, pom.Version) {
+		if !IsValidFeatureVersion(branch, pom.Version) {
 			log.Printf("feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
 			os.Exit(-1)
 		}
@@ -97,21 +96,17 @@ func CurrentBranch() (string, error) {
 	}
 }
 
-func IsFeatureBranch(branch string) bool {
-	b := strings.Contains(branch, "/")
-	if debug {
-		log.Printf("%s is a feature branch: %v\n", branch, b)
-	}
-	return b
-}
-
 func IsValidFeatureVersion(branch, version string) bool {
+	// local convention that a feature branch has the form a/b.  Pass on anything else.
 	parts := strings.Split(branch, "/")
 	if len(parts) != 2 {
 		return true
 	}
 	story := strings.ToLower(parts[1])
+
+	// normalize from feature/us_xyz to feature/usxyz
 	version = strings.Replace(version, "_", "", -1)
+
 	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
 	match, _ := regexp.MatchString(regex, version)
 	if debug {

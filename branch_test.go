@@ -2,6 +2,34 @@ package main
 
 import "testing"
 
+func TestFeatureValid(t *testing.T) {
+	branches := map[string]string{
+		"1.2-b-SNAPSHOT":       "a/b",
+		"1.1-us_1922-SNAPSHOT": "feature/US1922",
+		"1.2.3-123-SNAPSHOT":   "bug/123",
+		"foo":                  "somebranch",
+	}
+	for version, branch := range branches {
+		b := IsValidFeatureVersion(branch, version)
+		if !b {
+			t.Fatalf("IsValidFeatureBranch(%s,%s) expecting true", branch, version)
+		}
+	}
+}
+
+func TestFeatureNotValid(t *testing.T) {
+	branches := map[string]string{
+		"1.2-b":                "a/b",             // no -SNAPSHOT
+		"1.1-us_1922-SNAPSHOT": "feature/US19223", // wrong story
+	}
+	for version, branch := range branches {
+		b := IsValidFeatureVersion(branch, version)
+		if b {
+			t.Fatalf("IsValidFeatureBranch(%s,%s) expecting true", branch, version)
+		}
+	}
+}
+
 func TestDevelopVersion(t *testing.T) {
 	versions := []string{"1.0-SNAPSHOT", "2.14-SNAPSHOT", "2.14.15-SNAPSHOT"}
 	for _, version := range versions {
