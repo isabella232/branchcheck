@@ -1,8 +1,11 @@
 Branchcheck
 ===========
 
-A git pre-commit hook to verify the branch name is consistent with
-the stated artifact version in the POMs.  A git flow thing.
+A git pre-commit hook in support of jgitflow branch naming to verify
+the branch name is consistent with the stated artifact version in
+all POMs in a tree.  Versions on branch develop must be named
+major.minor-SNAPSHOT.  Feature branches follow jgitflow naming:
+major.minor-xx_dddd-SNAPSHOT.
 
 Go install
 ==========
