@@ -22,7 +22,7 @@ var (
 )
 
 func init() {
-	debug = os.Getenv("BRANCHCHECK_DEBUG") == "true"
+	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 }
 
 func main() {
