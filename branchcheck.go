@@ -115,7 +115,7 @@ func IsValidFeatureVersion(branch, version string) bool {
 	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
 	match, _ := regexp.MatchString(regex, version)
 	if debug {
-		log.Printf("%s is a branch compatible with version %s\n", branch, version)
+		log.Printf("%s is a branch compatible with version %s: %v\n", branch, version, match)
 	}
 	return match
 }
