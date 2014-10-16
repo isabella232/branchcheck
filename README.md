@@ -17,7 +17,8 @@ The longer version:  http://golang.org/doc/install
 Workspace
 =========
 
-Clone this repository into your Go workspace
+Standard Go workspace organization:  clone this repository into
+your workspace
 
      mkdir -p $GOPATH/src/github.com/xoom/
      cd $GOPATH/src/github.com/xoom/
