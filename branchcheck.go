@@ -28,7 +28,7 @@ func init() {
 func main() {
 	branch, err := CurrentBranch()
 	if err != nil {
-		log.Printf("Cannot determine current branch name\n", err)
+		log.Printf("Cannot determine current branch name.  You may not be in a git repository: %v\n", err)
 		return
 	}
 
