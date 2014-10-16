@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,46 +28,52 @@ func init() {
 func main() {
 	branch, err := CurrentBranch()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot determine current branch name\n", err)
+		log.Printf("Cannot determine current branch name\n", err)
 		return
 	}
+
 	if branch == "HEAD" {
-		fmt.Fprintf(os.Stderr, "You are not on a branch.  Returning.\n")
+		log.Printf("You are not on a branch.  Returning.\n")
 		return
 	}
+
 	if debug {
-		fmt.Fprintf(os.Stderr, "Validating branch %s\n", branch)
+		log.Printf("Validating branch %s\n", branch)
 	}
 
 	poms, err := FindPoms()
 	if err != nil || len(poms) == 0 {
-		fmt.Fprintf(os.Stderr, "Cannot find POMs\n", err)
+		log.Printf("Cannot find POMs\n", err)
 		return
 	}
 
 	for _, pomFile := range poms {
 		data, err := ioutil.ReadFile(pomFile)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", pomFile, err)
+			log.Printf("Error reading %s: %v\n", pomFile, err)
 			continue
 		}
 
 		if debug {
-			fmt.Fprintf(os.Stderr, "Analyzing %s\n", pomFile)
+			log.Printf("Analyzing %s\n", pomFile)
 		}
 
 		var pom POM
 		reader := bytes.NewBuffer(data)
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-			fmt.Fprintf(os.Stderr, "error parsing pom.xml: %v\n", err)
+			log.Printf("error parsing pom.xml: %v\n", err)
+			continue
+		}
+		// An inherited <version>
+		if pom.Version == "" {
 			continue
 		}
 		if branch == "develop" && !IsValidDevelopVersion(pom.Version) {
-			fmt.Fprintf(os.Stderr, "invalid develop branch version %s in %s\n", pom.Version, pomFile)
+			log.Printf("invalid develop branch version %s in %s\n", pom.Version, pomFile)
 			os.Exit(-1)
 		}
 		if IsFeatureBranch(branch) && !IsValidFeatureVersion(branch, pom.Version) {
-			fmt.Fprintf(os.Stderr, "feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
+			log.Printf("feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
 			os.Exit(-1)
 		}
 	}
@@ -77,7 +83,7 @@ func CurrentBranch() (string, error) {
 	cmd := "git"
 	args := []string{"rev-parse", "--abbrev-ref", "HEAD"}
 	if debug {
-		fmt.Fprintf(os.Stderr, "%s %v\n", cmd, args)
+		log.Printf("%s %v\n", cmd, args)
 	}
 	command := exec.Command(cmd, args...)
 	if data, err := command.Output(); err != nil {
@@ -88,17 +94,14 @@ func CurrentBranch() (string, error) {
 }
 
 func IsFeatureBranch(branch string) bool {
-	b := strings.Index(branch, "/") != -1
+	b := strings.Contains(branch, "/")
 	if debug {
-		fmt.Fprintf(os.Stderr, "%s is a feature branch: %v\n", branch, b)
+		log.Printf("%s is a feature branch: %v\n", branch, b)
 	}
 	return b
 }
 
 func IsValidFeatureVersion(branch, version string) bool {
-	if version == "" {
-		return true
-	}
 	parts := strings.Split(branch, "/")
 	if len(parts) != 2 {
 		return true
@@ -108,15 +111,12 @@ func IsValidFeatureVersion(branch, version string) bool {
 	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
 	match, _ := regexp.MatchString(regex, version)
 	if debug {
-		fmt.Fprintf(os.Stderr, "%s is a branch compatible with version %s\n", branch, version)
+		log.Printf("%s is a branch compatible with version %s\n", branch, version)
 	}
 	return match
 }
 
 func IsValidDevelopVersion(version string) bool {
-	if version == "" {
-		return true
-	}
 	match, _ := regexp.MatchString("[1-9]+(\\.[0-9]+)+-SNAPSHOT", version)
 	return match
 }
