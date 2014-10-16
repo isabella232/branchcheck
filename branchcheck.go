@@ -48,14 +48,14 @@ func main() {
 	}
 
 	for _, pomFile := range poms {
+		if debug {
+			log.Printf("Analyzing %s\n", pomFile)
+		}
+
 		data, err := ioutil.ReadFile(pomFile)
 		if err != nil {
 			log.Printf("Error reading %s: %v\n", pomFile, err)
 			continue
-		}
-
-		if debug {
-			log.Printf("Analyzing %s\n", pomFile)
 		}
 
 		var pom POM
@@ -138,6 +138,9 @@ func FindPoms() ([]string, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if debug {
+		log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
 }
