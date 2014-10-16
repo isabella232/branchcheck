@@ -64,6 +64,7 @@ func main() {
 			log.Printf("error parsing pom.xml %s: %v\n", pomFile, err)
 			continue
 		}
+
 		// An inherited <version> will have pom.Version==""
 		if pom.Version == "" || branch == "master" {
 			continue
