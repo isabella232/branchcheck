@@ -24,8 +24,8 @@ Clone this repository into your Go workspace
 Build
 =====
 
-     go build
      go test
+     go build
 
 Then copy ./branchcheck into .git/hooks/pre-commit for local repos of interest.
 
