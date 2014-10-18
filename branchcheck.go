@@ -89,14 +89,12 @@ func main() {
 }
 
 func Exclude(skipList []string, file string) bool {
-	skip := false
 	for _, excl := range skipList {
 		if file == excl {
-			skip = true
-			break
+			return true
 		}
 	}
-	return skip
+	return false
 }
 
 func CurrentBranch() (string, error) {
