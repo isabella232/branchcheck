@@ -20,7 +20,7 @@ type POM struct {
 
 var (
 	debug    bool
-	excludes = flag.String("excludes", "", "poms to exclude, by path")
+	excludes = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
 	skipList []string
 )
 
