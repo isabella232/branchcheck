@@ -21,23 +21,13 @@ type POM struct {
 var (
 	debug    bool
 	excludes = flag.String("excludes", "", "poms to exclude, by path")
-	skipPom  func() func(string) bool
+	skipList []string
 )
 
 func init() {
 	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 	flag.Parse()
-	skipPom = func() func(string) bool {
-		ex := strings.Split(*excludes, ",")
-		return func(f string) bool {
-			for _, excl := range ex {
-				if f == excl {
-					return true
-				}
-			}
-			return false
-		}
-	}
+	skipList = strings.Split(*excludes, ",")
 }
 
 func main() {
@@ -63,7 +53,7 @@ func main() {
 	}
 
 	for _, pomFile := range poms {
-		if !skipPom()(pomFile) {
+		if !SkipPom(pomFile) {
 			if debug {
 				log.Printf("Analyzing %s\n", pomFile)
 			}
@@ -156,4 +146,13 @@ func FindPoms() ([]string, error) {
 		log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
+}
+
+func SkipPom(f string) bool {
+	for _, excl := range skipList {
+		if f == excl {
+			return true
+		}
+	}
+	return false
 }
