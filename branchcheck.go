@@ -60,7 +60,9 @@ func main() {
 		}
 
 		if _, present := skipMap[pomFile]; present {
-			log.Printf("Skipping excluded pom: %s\n", pomFile)
+			if debug {
+				log.Printf("Skipping excluded pom: %s\n", pomFile)
+			}
 			continue
 		}
 
