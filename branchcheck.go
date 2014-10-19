@@ -55,12 +55,13 @@ func main() {
 	}
 
 	for _, pomFile := range poms {
-		if _, present := skipMap[pomFile]; present {
-			continue
-		}
-
 		if debug {
 			log.Printf("Analyzing %s\n", pomFile)
+		}
+
+		if _, present := skipMap[pomFile]; present {
+			log.Printf("Skipping excluded pom: %s\n", pomFile)
+			continue
 		}
 
 		data, err := ioutil.ReadFile(pomFile)
