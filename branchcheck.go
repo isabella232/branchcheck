@@ -21,13 +21,15 @@ type POM struct {
 var (
 	debug    bool
 	excludes = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
-	skipList []string
+	skipMap  = make(map[string]string)
 )
 
 func init() {
 	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 	flag.Parse()
-	skipList = strings.Split(*excludes, ",")
+	for _, v := range strings.Split(*excludes, ",") {
+		skipMap[v] = ""
+	}
 }
 
 func main() {
@@ -53,39 +55,40 @@ func main() {
 	}
 
 	for _, pomFile := range poms {
-		if !SkipPom(pomFile) {
-			if debug {
-				log.Printf("Analyzing %s\n", pomFile)
-			}
+		if _, present := skipMap[pomFile]; present {
+			continue
+		}
+		if debug {
+			log.Printf("Analyzing %s\n", pomFile)
+		}
 
-			data, err := ioutil.ReadFile(pomFile)
-			if err != nil {
-				log.Printf("Error reading %s: %v\n", pomFile, err)
-				continue
-			}
+		data, err := ioutil.ReadFile(pomFile)
+		if err != nil {
+			log.Printf("Error reading %s: %v\n", pomFile, err)
+			continue
+		}
 
-			var pom POM
-			reader := bytes.NewBuffer(data)
-			if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-				log.Printf("Error parsing pom.xml %s: %v\n", pomFile, err)
-				continue
-			}
+		var pom POM
+		reader := bytes.NewBuffer(data)
+		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
+			log.Printf("Error parsing pom.xml %s: %v\n", pomFile, err)
+			continue
+		}
 
-			// An inherited <version> will have pom.Version==""
-			if pom.Version == "" || branch == "master" {
-				continue
-			}
-			if branch == "develop" {
-				if !IsValidDevelopVersion(pom.Version) {
-					log.Printf("Invalid develop branch version %s in %s\n", pom.Version, pomFile)
-					os.Exit(-1)
-				}
-				continue
-			}
-			if !IsValidFeatureVersion(branch, pom.Version) {
-				log.Printf("Feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
+		// An inherited <version> will have pom.Version==""
+		if pom.Version == "" || branch == "master" {
+			continue
+		}
+		if branch == "develop" {
+			if !IsValidDevelopVersion(pom.Version) {
+				log.Printf("Invalid develop branch version %s in %s\n", pom.Version, pomFile)
 				os.Exit(-1)
 			}
+			continue
+		}
+		if !IsValidFeatureVersion(branch, pom.Version) {
+			log.Printf("Feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
+			os.Exit(-1)
 		}
 	}
 }
@@ -146,13 +149,4 @@ func FindPoms() ([]string, error) {
 		log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
-}
-
-func SkipPom(f string) bool {
-	for _, excl := range skipList {
-		if f == excl {
-			return true
-		}
-	}
-	return false
 }
