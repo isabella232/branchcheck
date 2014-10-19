@@ -38,7 +38,7 @@ func main() {
 	}
 
 	if branch == "HEAD" {
-		log.Printf("You are not on a branch.  Returning.\n")
+		log.Printf("You are not on a branch.\n")
 		return
 	}
 
@@ -67,7 +67,7 @@ func main() {
 			var pom POM
 			reader := bytes.NewBuffer(data)
 			if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-				log.Printf("error parsing pom.xml %s: %v\n", pomFile, err)
+				log.Printf("Error parsing pom.xml %s: %v\n", pomFile, err)
 				continue
 			}
 
@@ -77,13 +77,13 @@ func main() {
 			}
 			if branch == "develop" {
 				if !IsValidDevelopVersion(pom.Version) {
-					log.Printf("invalid develop branch version %s in %s\n", pom.Version, pomFile)
+					log.Printf("Invalid develop branch version %s in %s\n", pom.Version, pomFile)
 					os.Exit(-1)
 				}
 				continue
 			}
 			if !IsValidFeatureVersion(branch, pom.Version) {
-				log.Printf("feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
+				log.Printf("Feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
 				os.Exit(-1)
 			}
 		}
