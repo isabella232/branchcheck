@@ -58,6 +58,7 @@ func main() {
 		if _, present := skipMap[pomFile]; present {
 			continue
 		}
+
 		if debug {
 			log.Printf("Analyzing %s\n", pomFile)
 		}
