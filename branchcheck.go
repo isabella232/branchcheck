@@ -21,13 +21,15 @@ type POM struct {
 var (
 	debug    bool
 	excludes = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
-	skipMap  = make(map[string]string)
+	skipMap  map[string]string
 )
 
 func init() {
 	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 	flag.Parse()
-	for _, v := range strings.Split(*excludes, ",") {
+	a := strings.Split(*excludes, ",")
+	skipMap = make(map[string]string, len(a))
+	for _, v := range a {
 		skipMap[v] = ""
 	}
 }
