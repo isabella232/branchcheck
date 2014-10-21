@@ -36,6 +36,14 @@ Then copy ./branchcheck into .git/hooks/pre-commit for local repos of interest.
 You can also just run branchcheck at the top level of your repository,
 which is where it would run if it were a pre-commit hook.
 
+Exclusions
+==========
+
+There may be poms that you wish to exclude from processing.  Notate these with the -excludes command 
+line switch
+
+     branchcheck -excludes apath/pom.xml,bpath/pom.xml
+
 Logging
 =======
 
