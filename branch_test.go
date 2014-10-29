@@ -4,10 +4,11 @@ import "testing"
 
 func TestFeatureValid(t *testing.T) {
 	branches := map[string]string{
-		"1.2-b-SNAPSHOT":       "a/b",
-		"1.1-us_1922-SNAPSHOT": "feature/US1922",
-		"1.2.3-123-SNAPSHOT":   "bug/123",
-		"foo":                  "somebranch",
+		"1.2-b-SNAPSHOT":        "a/b",
+		"1.1-us_1922-SNAPSHOT":  "feature/US1922",
+		"14.6-trnk_12-SNAPSHOT": "feature/TRNK-12",
+		"1.2.3-123-SNAPSHOT":    "bug/123",
+		"foo":                   "somebranch",
 	}
 	for version, branch := range branches {
 		b := IsValidFeatureVersion(branch, version)

@@ -120,11 +120,13 @@ func IsValidFeatureVersion(branch, version string) bool {
 		return true
 	}
 	story := strings.ToLower(parts[1])
+	story = strings.Replace(story, "-", "", -1)
+	story = strings.Replace(story, "_", "", -1)
 
-	// normalize from a.b.c-us_xyz-SNAPSHOT to a.b.c-usxyz-SNAPSHOT
-	version = strings.Replace(version, "_", "", -1)
+	// normalize the POM version from a.b.c-us_xyz-SNAPSHOT to a.b.c-usxyz-SNAPSHOT
+	version = strings.ToLower(strings.Replace(version, "_", "", -1))
 
-	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-SNAPSHOT"
+	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-snapshot"
 	match, _ := regexp.MatchString(regex, version)
 	if debug {
 		log.Printf("%s is a branch compatible with version %s: %v\n", branch, version, match)
