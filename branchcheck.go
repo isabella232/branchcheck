@@ -21,7 +21,10 @@ type POM struct {
 var (
 	debug    bool
 	excludes = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
-	skipMap  map[string]string
+	version  = flag.Bool("version", false, "Print git commit from which we were built")
+
+	skipMap map[string]string
+	commit  string
 )
 
 func init() {
@@ -35,6 +38,11 @@ func init() {
 }
 
 func main() {
+	log.Printf("branchcheck build commit ID: %s\n", commit)
+	if *version {
+		os.Exit(0)
+	}
+
 	branch, err := CurrentBranch()
 	if err != nil {
 		log.Printf("Cannot determine current branch name.  You may not be in a git repository: %v\n", err)
