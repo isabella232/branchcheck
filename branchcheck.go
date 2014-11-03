@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 type POM struct {
@@ -128,18 +129,22 @@ func IsValidFeatureVersion(branch, version string) bool {
 		return true
 	}
 	story := strings.ToLower(parts[1])
-	story = strings.Replace(story, "-", "", -1)
-	story = strings.Replace(story, "_", "", -1)
+	var normalizedStory string
+	for _, v := range story {
+		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
+			normalizedStory = normalizedStory + string(v)
+		}
+	}
 
 	// normalize the POM version from a.b.c-us_xyz-SNAPSHOT to a.b.c-usxyz-SNAPSHOT
-	version = strings.ToLower(strings.Replace(version, "_", "", -1))
-
-	regex := "[1-9]+(\\.[0-9]+)+-" + story + "-snapshot"
-	match, _ := regexp.MatchString(regex, version)
-	if debug {
-		log.Printf("%s is a branch compatible with version %s: %v\n", branch, version, match)
+	var normalizedVersion string
+	for _, v := range strings.ToLower(version) {
+		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
+			normalizedVersion = normalizedVersion + string(v)
+		}
 	}
-	return match
+
+	return strings.HasSuffix(normalizedVersion, normalizedStory+"snapshot")
 }
 
 func IsValidDevelopVersion(version string) bool {
