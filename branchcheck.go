@@ -128,15 +128,16 @@ func IsValidFeatureVersion(branch, version string) bool {
 	if len(parts) != 2 {
 		return true
 	}
-	story := strings.ToLower(parts[1])
+
+	// normalize the story part of the branch by lowercasing and filtering out any non-digit and non-letter characters
 	var normalizedStory string
-	for _, v := range story {
+	for _, v := range strings.ToLower(parts[1]) {
 		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
 			normalizedStory = normalizedStory + string(v)
 		}
 	}
 
-	// normalize the POM version from a.b.c-us_xyz-SNAPSHOT to a.b.c-usxyz-SNAPSHOT
+	// normalize the POM version by lowercasing and filtering out any non-digit and non-letter characters
 	var normalizedVersion string
 	for _, v := range strings.ToLower(version) {
 		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
