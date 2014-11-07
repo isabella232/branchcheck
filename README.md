@@ -17,12 +17,16 @@ The longer version:  http://golang.org/doc/install
 Install Branchcheck
 ===================
 
+To just install and run branchcheck
+
      $ go get github.com/xoom/branchcheck
      $ which branchcheck
      /Users/mpetrovic/Projects/go/bin/branchcheck
 
 Build
 =====
+
+If you want to modify branchcheck
 
      $ cd $GOPATH/src/github.com/xoom/branchcheck
      $ go test
