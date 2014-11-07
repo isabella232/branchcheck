@@ -14,32 +14,24 @@ Quick install:  http://goo.gl/Or96vH
 
 The longer version:  http://golang.org/doc/install
 
-Workspace
-=========
+Install Branchcheck
+===================
 
-Standard Go workspace organization:  clone this repository into
-your workspace
-
-     mkdir -p $GOPATH/src/github.com/xoom/
-     cd $GOPATH/src/github.com/xoom/
-     git clone https://github.com/xoom/branchcheck.git
-     cd branchcheck
+     $ go get github.com/xoom/branchcheck
+     $ which branchcheck
+     /Users/mpetrovic/Projects/go/bin/branchcheck
 
 Build
 =====
 
-     go test
-     go build
-
-Then copy ./branchcheck into .git/hooks/pre-commit for local repos of interest.
-
-You can also just run branchcheck at the top level of your repository,
-which is where it would run if it were a pre-commit hook.
+     $ cd $GOPATH/src/github.com/xoom/branchcheck
+     $ go test
+     $ go build # or make
 
 Exclusions
 ==========
 
-There may be poms that you wish to exclude from processing.  Notate these with the -excludes command 
+There may be POMs that you wish to exclude from processing.  Notate these with the -excludes command 
 line switch
 
      branchcheck -excludes apath/pom.xml,bpath/pom.xml
