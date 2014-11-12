@@ -123,10 +123,10 @@ func CurrentBranch() (string, error) {
 }
 
 func IsValidFeatureVersion(branch, version string) bool {
-	// local convention that a feature branch has the form a/b.  Pass on anything else.
+	// local convention that a feature branch has the form a/b.
 	parts := strings.Split(branch, "/")
 	if len(parts) != 2 {
-		return true
+		return false
 	}
 
 	// normalize the story part of the branch by lowercasing and filtering out any non-digit and non-letter characters

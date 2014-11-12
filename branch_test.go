@@ -8,7 +8,6 @@ func TestFeatureValid(t *testing.T) {
 		"1.1-us_1922-SNAPSHOT":  "feature/US1922",
 		"14.6-trnk_12-SNAPSHOT": "feature/TRNK-12",
 		"1.2.3-123-SNAPSHOT":    "bug/123",
-		"foo":                   "somebranch",
 	}
 	for version, branch := range branches {
 		b := IsValidFeatureVersion(branch, version)
@@ -22,6 +21,7 @@ func TestFeatureNotValid(t *testing.T) {
 	branches := map[string]string{
 		"1.2-b":                "a/b",             // no -SNAPSHOT
 		"1.1-us_1922-SNAPSHOT": "feature/US19223", // wrong story
+		"foo": "somebranch", // branches wihout a "/" in the are not valid here
 	}
 	for version, branch := range branches {
 		b := IsValidFeatureVersion(branch, version)
