@@ -54,6 +54,11 @@ func main() {
 		return
 	}
 
+	if branch == "master" {
+		log.Printf("branchcheck does not analyze branch master.  Returning.\n")
+		return
+	}
+
 	if branch == "HEAD" {
 		log.Printf("You are not on a branch.\n")
 		return
@@ -92,11 +97,6 @@ func main() {
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
 			log.Printf("Error parsing pom.xml %s: %v\n", pomFile, err)
 			continue
-		}
-
-		if branch == "master" {
-			log.Printf("branchcheck does not analyze branch master.  Returning.\n")
-			return
 		}
 
 		if pom.Version == "" && pom.Parent.Version == "" {
