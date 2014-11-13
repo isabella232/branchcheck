@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -65,7 +66,7 @@ func main() {
 	}
 
 	if debug {
-		log.Printf("Validating branch %s\n", branch)
+		log.Printf("Analyzing branch %s\n", branch)
 	}
 
 	poms, err := FindPoms()
@@ -100,7 +101,7 @@ func main() {
 		}
 
 		if pom.Version == "" && pom.Parent.Version == "" {
-			panic("pom version and parent are both empty")
+			panic(fmt.Sprintf("pom version and parent are both empty in pom %s\n", pomFile))
 		}
 
 		var effectiveVersion string
@@ -112,8 +113,11 @@ func main() {
 		} else {
 			effectiveVersion = pom.Version
 		}
+
 		if strings.HasPrefix(effectiveVersion, "$") {
-			log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			if debug {
+				log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			}
 			continue
 		}
 		if debug {
