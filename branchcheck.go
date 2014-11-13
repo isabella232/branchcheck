@@ -109,12 +109,11 @@ func main() {
 			if debug {
 				log.Printf("Using parent-version in pom %s\n", pomFile)
 			}
-
 		} else {
 			effectiveVersion = pom.Version
 		}
 		if strings.HasPrefix(effectiveVersion, "$") {
-			log.Printf("Skipping unresolvable token %s in pom %s\n", effectiveVersion, pomFile)
+			log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
 			continue
 		}
 		if debug {
