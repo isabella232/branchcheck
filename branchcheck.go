@@ -111,6 +111,13 @@ func main() {
 		} else {
 			effectiveVersion = pom.Version
 		}
+		if strings.HasPrefix(effectiveVersion, "$") {
+			log.Printf("Skipping unresolvable token %s in pom %s\n", effectiveVersion, pomFile)
+			continue
+		}
+		if debug {
+			log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
+		}
 
 		if branch == "develop" {
 			if !IsValidDevelopVersion(effectiveVersion) {
