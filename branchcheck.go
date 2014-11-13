@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/xml"
 	"flag"
@@ -25,9 +26,10 @@ type POM struct {
 }
 
 var (
-	debug    bool
-	excludes = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
-	version  = flag.Bool("version", false, "Print git commit from which we were built")
+	debug           bool
+	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
+	version         = flag.Bool("version", false, "Print git commit from which we were built")
+	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote.")
 
 	skipMap map[string]string
 	commit  string
@@ -47,6 +49,11 @@ func main() {
 	log.Printf("branchcheck build commit ID: %s\n", commit)
 	if *version {
 		os.Exit(0)
+	}
+
+	if *versionDupCheck {
+		DupCheck()
+		return
 	}
 
 	branch, err := CurrentBranch()
@@ -201,4 +208,106 @@ func FindPoms() ([]string, error) {
 		log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
+}
+
+func GitFetch() error {
+	cmd := "git"
+	args := []string{"fetch"}
+	if debug {
+		log.Printf("%s %v\n", cmd, args)
+	}
+	command := exec.Command(cmd, args...)
+	if _, err := command.CombinedOutput(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GitCheckoutBranch(branchName string) error {
+	cmd := "git"
+	args := []string{"checkout", branchName}
+	if debug {
+		log.Printf("%s %v\n", cmd, args)
+	}
+	command := exec.Command(cmd, args...)
+	if _, err := command.CombinedOutput(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetBranches() ([]string, error) {
+	cmd := "git"
+	args := []string{"ls-remote", "--heads"}
+	if debug {
+		log.Printf("%s %v\n", cmd, args)
+	}
+
+	command := exec.Command(cmd, args...)
+	if data, err := command.Output(); err != nil {
+		return nil, err
+	} else {
+		r := make([]string, 0)
+		readbuffer := bytes.NewBuffer(data)
+		reader := bufio.NewReader(readbuffer)
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			parts := strings.Fields(scanner.Text())
+			branchName := strings.Replace(parts[1], "refs/heads/", "", -1)
+			r = append(r, branchName)
+		}
+		return r, nil
+	}
+}
+
+func DupCheck() {
+	if err := GitFetch(); err != nil {
+		log.Fatalf("Error in git-fetch: %v\n", err)
+	}
+	if r, err := GetBranches(); err != nil {
+		log.Fatalf("Error getting remote heads: %v\n", err)
+	} else {
+		versionMap := make(map[string]map[string]string)
+		fmt.Println(versionMap)
+
+		for _, v := range r {
+			if err := GitCheckoutBranch(v); err != nil {
+				log.Fatalf("Cannot checkout branch %s: %v\n", v, err)
+			}
+
+			pomFile := "pom.xml"
+			data, err := ioutil.ReadFile(pomFile)
+			if err != nil {
+				log.Fatalf("Error reading %s: %v\n", pomFile, err)
+			}
+
+			var pom POM
+			reader := bytes.NewBuffer(data)
+			if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
+				log.Fatalf("Error parsing pom.xml %s: %v\n", pomFile, err)
+			}
+
+			if pom.Version == "" && pom.Parent.Version == "" {
+				panic(fmt.Sprintf("pom version and parent are both empty in pom %s\n", pomFile))
+			}
+
+			var effectiveVersion string
+			if pom.Version == "" {
+				effectiveVersion = pom.Parent.Version
+				if debug {
+					log.Printf("Using parent-version in pom %s\n", pomFile)
+				}
+			} else {
+				effectiveVersion = pom.Version
+			}
+
+			if strings.HasPrefix(effectiveVersion, "$") {
+				log.Fatalf("Cannot analyze pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			}
+			if debug {
+				log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
+			}
+
+		}
+	}
 }
