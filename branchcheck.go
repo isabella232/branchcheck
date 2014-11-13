@@ -16,6 +16,12 @@ import (
 
 type POM struct {
 	XMLName xml.Name `xml:"project"`
+	Parent  Parent   `xml:"parent"`
+	Version string   `xml:"version"`
+}
+
+type Parent struct {
+	XMLName xml.Name `xml:"parent"`
 	Version string   `xml:"version"`
 }
 
@@ -90,19 +96,31 @@ func main() {
 			continue
 		}
 
-		// An inherited <version> will have pom.Version==""
-		if pom.Version == "" || branch == "master" {
-			continue
+		if branch == "master" {
+			log.Printf("branchcheck does not analyze branch master.  Returning.\n")
+			return
 		}
+
+		if pom.Version == "" && pom.Parent.Version == "" {
+			panic("pom version and parent are both empty")
+		}
+
+		var effectiveVersion string
+		if pom.Version == "" {
+			effectiveVersion = pom.Parent.Version
+		} else {
+			effectiveVersion = pom.Version
+		}
+
 		if branch == "develop" {
-			if !IsValidDevelopVersion(pom.Version) {
-				log.Printf("Invalid develop branch version %s in %s\n", pom.Version, pomFile)
+			if !IsValidDevelopVersion(effectiveVersion) {
+				log.Printf("Invalid develop branch version %s in %s\n", effectiveVersion, pomFile)
 				os.Exit(-1)
 			}
 			continue
 		}
-		if !IsValidFeatureVersion(branch, pom.Version) {
-			log.Printf("Feature branch %s has invalid version %s in %s\n", branch, pom.Version, pomFile)
+		if !IsValidFeatureVersion(branch, effectiveVersion) {
+			log.Printf("Feature branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
 			os.Exit(-1)
 		}
 	}
