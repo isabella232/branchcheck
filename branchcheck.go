@@ -106,6 +106,10 @@ func main() {
 		var effectiveVersion string
 		if pom.Version == "" {
 			effectiveVersion = pom.Parent.Version
+			if debug {
+				log.Printf("Using parent-version in pom %s\n", pomFile)
+			}
+
 		} else {
 			effectiveVersion = pom.Version
 		}
