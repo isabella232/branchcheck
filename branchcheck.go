@@ -16,13 +16,11 @@ import (
 
 type POM struct {
 	XMLName xml.Name `xml:"project"`
-	Parent  Parent   `xml:"parent"`
-	Version string   `xml:"version"`
-}
-
-type Parent struct {
-	XMLName xml.Name `xml:"parent"`
-	Version string   `xml:"version"`
+	Parent  struct {
+		XMLName xml.Name `xml:"parent"`
+		Version string   `xml:"version"`
+	} `xml:"parent"`
+	Version string `xml:"version"`
 }
 
 var (
