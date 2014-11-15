@@ -52,7 +52,9 @@ func main() {
 	}
 
 	if *versionDupCheck {
-		DupCheck()
+		if err := DupCheck(); err != nil {
+			log.Printf("error running dup-check: %v\n", err)
+		}
 		return
 	}
 
@@ -223,6 +225,19 @@ func GitFetch() error {
 	return nil
 }
 
+func GitStash() error {
+	cmd := "git"
+	args := []string{"stash", "--include-untracked"}
+	if debug {
+		log.Printf("%s %v\n", cmd, args)
+	}
+	command := exec.Command(cmd, args...)
+	if _, err := command.CombinedOutput(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func GitCheckoutBranch(branchName string) error {
 	cmd := "git"
 	args := []string{"checkout", branchName}
@@ -269,6 +284,9 @@ func DupCheck() error {
 	} else {
 		t := make(map[string][]string)
 		for _, branch := range branches {
+			if err := GitStash(); err != nil {
+				return fmt.Errorf("Cannot stash to clean workspace on branch %s: %v\n", branch, err)
+			}
 			if err := GitCheckoutBranch(branch); err != nil {
 				return fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
 			}
