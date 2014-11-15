@@ -260,54 +260,76 @@ func GetBranches() ([]string, error) {
 	}
 }
 
-func DupCheck() {
+func DupCheck() error {
 	if err := GitFetch(); err != nil {
-		log.Fatalf("Error in git-fetch: %v\n", err)
+		fmt.Errorf("Error in git-fetch: %v\n", err)
 	}
-	if r, err := GetBranches(); err != nil {
-		log.Fatalf("Error getting remote heads: %v\n", err)
+	if branches, err := GetBranches(); err != nil {
+		fmt.Errorf("Error getting remote heads: %v\n", err)
 	} else {
-		versionMap := make(map[string]map[string]string)
-		fmt.Println(versionMap)
-
-		for _, v := range r {
-			if err := GitCheckoutBranch(v); err != nil {
-				log.Fatalf("Cannot checkout branch %s: %v\n", v, err)
+		t := make(map[string][]string)
+		for _, branch := range branches {
+			if err := GitCheckoutBranch(branch); err != nil {
+				return fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
 			}
-
-			pomFile := "pom.xml"
-			data, err := ioutil.ReadFile(pomFile)
+			if err := walkToGitRoot("."); err != nil {
+				return err
+			}
+			effectiveVersion, err := pomVersion("pom.xml")
 			if err != nil {
-				log.Fatalf("Error reading %s: %v\n", pomFile, err)
+				return err
 			}
-
-			var pom POM
-			reader := bytes.NewBuffer(data)
-			if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-				log.Fatalf("Error parsing pom.xml %s: %v\n", pomFile, err)
+			_, present := t[effectiveVersion]
+			if !present {
+				t[effectiveVersion] = make([]string, 0)
 			}
-
-			if pom.Version == "" && pom.Parent.Version == "" {
-				panic(fmt.Sprintf("pom version and parent are both empty in pom %s\n", pomFile))
+			t[effectiveVersion] = append(t[effectiveVersion], branch)
+		}
+		for k, v := range t {
+			if len(v) > 1 {
+				log.Printf("multiple branches %+v with version %s\n", v, k)
 			}
-
-			var effectiveVersion string
-			if pom.Version == "" {
-				effectiveVersion = pom.Parent.Version
-				if debug {
-					log.Printf("Using parent-version in pom %s\n", pomFile)
-				}
-			} else {
-				effectiveVersion = pom.Version
-			}
-
-			if strings.HasPrefix(effectiveVersion, "$") {
-				log.Fatalf("Cannot analyze pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
-			}
-			if debug {
-				log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
-			}
-
 		}
 	}
+	return nil
+}
+
+func walkToGitRoot(dir string) error {
+	return nil
+}
+
+func pomVersion(pomFile string) (string, error) {
+	data, err := ioutil.ReadFile(pomFile)
+	if err != nil {
+		return "", err
+	}
+
+	var pom POM
+	reader := bytes.NewBuffer(data)
+	if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
+		return "", err
+	}
+
+	if pom.Version == "" && pom.Parent.Version == "" {
+		return "", fmt.Errorf("pom version and parent are both empty in pom %s\n", pomFile)
+	}
+
+	var effectiveVersion string
+	if pom.Version == "" {
+		effectiveVersion = pom.Parent.Version
+		if debug {
+			log.Printf("Using parent-version in pom %s\n", pomFile)
+		}
+	} else {
+		effectiveVersion = pom.Version
+	}
+
+	if strings.HasPrefix(effectiveVersion, "$") {
+		return "", fmt.Errorf("Cannot analyze pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+	}
+	if debug {
+		log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
+	}
+
+	return effectiveVersion, nil
 }
