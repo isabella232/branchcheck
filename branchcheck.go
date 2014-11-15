@@ -29,7 +29,7 @@ var (
 	debug           bool
 	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
 	version         = flag.Bool("version", false, "Print git commit from which we were built")
-	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote.")
+	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
 
 	skipMap map[string]string
 	commit  string
@@ -290,9 +290,6 @@ func DupCheck() error {
 			if err := GitCheckoutBranch(branch); err != nil {
 				return fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
 			}
-			if err := walkToGitRoot("."); err != nil {
-				return err
-			}
 			effectiveVersion, err := pomVersion("pom.xml")
 			if err != nil {
 				return err
@@ -312,8 +309,24 @@ func DupCheck() error {
 	return nil
 }
 
-func walkToGitRoot(dir string) error {
-	return nil
+func walkToGitRoot(dir string) (string, error) {
+	fileInfo, err := os.Stat(dir + "/.git")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return walkToGitRoot(dir + "/..")
+		} else {
+			return "", err
+		}
+	}
+	if fileInfo == nil {
+		return walkToGitRoot(dir + "/..")
+	}
+	if fileInfo.IsDir() {
+		return dir, nil
+	} else {
+		// weird that a .git inode exists but it is not a directory
+		return walkToGitRoot(dir + "/..")
+	}
 }
 
 func pomVersion(pomFile string) (string, error) {
