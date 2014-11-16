@@ -30,6 +30,7 @@ var (
 	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
 	version         = flag.Bool("version", false, "Print git commit from which we were built")
 	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
+	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.")
 
 	skipMap map[string]string
 	commit  string
@@ -58,20 +59,27 @@ func main() {
 		return
 	}
 
+	if *branchCompat {
+		if err := BranchCompat(); err != nil {
+			log.Printf("%v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+}
+
+func BranchCompat() error {
 	branch, err := CurrentBranch()
 	if err != nil {
-		log.Printf("Cannot determine current branch name.  You may not be in a git repository: %v\n", err)
-		return
+		return fmt.Errorf("Cannot determine current branch name.  You may not be in a git repository: %v\n", err)
 	}
 
 	if branch == "master" {
-		log.Printf("branchcheck does not analyze branch master.  Returning.\n")
-		return
+		return fmt.Errorf("branchcheck does not analyze branch master.  Returning.\n")
 	}
 
 	if branch == "HEAD" {
-		log.Printf("You are not on a branch.\n")
-		return
+		return fmt.Errorf("You are not on a branch.\n")
 	}
 
 	if debug {
@@ -79,9 +87,12 @@ func main() {
 	}
 
 	poms, err := FindPoms()
-	if err != nil || len(poms) == 0 {
-		log.Printf("Cannot find POMs\n", err)
-		return
+	if err != nil {
+		return err
+	}
+
+	if len(poms) == 0 {
+		return fmt.Errorf("Cannot find POMs\n")
 	}
 
 	for _, pomFile := range poms {
@@ -96,55 +107,26 @@ func main() {
 			continue
 		}
 
-		data, err := ioutil.ReadFile(pomFile)
+		effectiveVersion, err := pomVersion(pomFile)
 		if err != nil {
-			log.Printf("Error reading %s: %v\n", pomFile, err)
-			continue
+			return err
 		}
-
-		var pom POM
-		reader := bytes.NewBuffer(data)
-		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-			log.Printf("Error parsing pom.xml %s: %v\n", pomFile, err)
-			continue
-		}
-
-		if pom.Version == "" && pom.Parent.Version == "" {
-			panic(fmt.Sprintf("pom version and parent are both empty in pom %s\n", pomFile))
-		}
-
-		var effectiveVersion string
-		if pom.Version == "" {
-			effectiveVersion = pom.Parent.Version
-			if debug {
-				log.Printf("Using parent-version in pom %s\n", pomFile)
-			}
-		} else {
-			effectiveVersion = pom.Version
-		}
-
 		if strings.HasPrefix(effectiveVersion, "$") {
-			if debug {
-				log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
-			}
+			log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
 			continue
-		}
-		if debug {
-			log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
 		}
 
 		if branch == "develop" {
 			if !IsValidDevelopVersion(effectiveVersion) {
-				log.Printf("Invalid develop branch version %s in %s\n", effectiveVersion, pomFile)
-				os.Exit(-1)
+				return fmt.Errorf("Invalid develop branch version %s in %s\n", effectiveVersion, pomFile)
 			}
 			continue
 		}
 		if !IsValidFeatureVersion(branch, effectiveVersion) {
-			log.Printf("Feature branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
-			os.Exit(-1)
+			return fmt.Errorf("Feature branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
 		}
 	}
+	return nil
 }
 
 func CurrentBranch() (string, error) {
@@ -355,9 +337,6 @@ func pomVersion(pomFile string) (string, error) {
 		effectiveVersion = pom.Version
 	}
 
-	if strings.HasPrefix(effectiveVersion, "$") {
-		return "", fmt.Errorf("Cannot analyze pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
-	}
 	if debug {
 		log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
 	}
