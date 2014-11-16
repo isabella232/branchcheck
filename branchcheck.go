@@ -192,14 +192,15 @@ func Exec(cmd string, args ...string) ([]byte, []byte, error) {
 	if debug {
 		log.Printf("%s %v\n", cmd, args)
 	}
-	cmdStdout := &bytes.Buffer{}
-	cmdStderr := &bytes.Buffer{}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 
 	command := exec.Command(cmd, args...)
-	command.Stdout = cmdStdout
-	command.Stderr = cmdStderr
+	command.Stdout = stdout
+	command.Stderr = stderr
+
 	err := command.Run()
-	return cmdStdout.Bytes(), cmdStderr.Bytes(), err
+	return stdout.Bytes(), stderr.Bytes(), err
 }
 
 func GitFetch() error {
