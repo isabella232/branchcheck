@@ -86,7 +86,7 @@ func BranchCompat() error {
 		log.Printf("Analyzing branch %s\n", branch)
 	}
 
-	poms, err := FindPoms()
+	poms, err := FindPoms(".")
 	if err != nil {
 		return err
 	}
@@ -168,9 +168,9 @@ func IsValidDevelopVersion(version string) bool {
 	return match
 }
 
-func FindPoms() ([]string, error) {
+func FindPoms(dir string) ([]string, error) {
 	files := make([]string, 0)
-	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
