@@ -194,58 +194,47 @@ func FindPoms() ([]string, error) {
 	return files, nil
 }
 
-func GitFetch() error {
-	cmd := "git"
-	args := []string{"fetch"}
+func Exec(cmd string, args ...string) ([]byte, []byte, error) {
 	if debug {
 		log.Printf("%s %v\n", cmd, args)
 	}
+	cmdStdout := &bytes.Buffer{}
+	cmdStderr := &bytes.Buffer{}
+
 	command := exec.Command(cmd, args...)
-	if _, err := command.CombinedOutput(); err != nil {
+	command.Stdout = cmdStdout
+	command.Stderr = cmdStderr
+	err := command.Run()
+	return cmdStdout.Bytes(), cmdStderr.Bytes(), err
+}
+
+func GitFetch() error {
+	if _, _, err := Exec("git", "fetch"); err != nil {
 		return err
 	}
 	return nil
 }
 
 func GitStash() error {
-	cmd := "git"
-	args := []string{"stash", "--include-untracked"}
-	if debug {
-		log.Printf("%s %v\n", cmd, args)
-	}
-	command := exec.Command(cmd, args...)
-	if _, err := command.CombinedOutput(); err != nil {
+	if _, _, err := Exec("git", "stash", "--include-untracked"); err != nil {
 		return err
 	}
 	return nil
 }
 
 func GitCheckoutBranch(branchName string) error {
-	cmd := "git"
-	args := []string{"checkout", branchName}
-	if debug {
-		log.Printf("%s %v\n", cmd, args)
-	}
-	command := exec.Command(cmd, args...)
-	if _, err := command.CombinedOutput(); err != nil {
+	if _, _, err := Exec("git", "checkout", branchName); err != nil {
 		return err
 	}
 	return nil
 }
 
 func GetBranches() ([]string, error) {
-	cmd := "git"
-	args := []string{"ls-remote", "--heads"}
-	if debug {
-		log.Printf("%s %v\n", cmd, args)
-	}
-
-	command := exec.Command(cmd, args...)
-	if data, err := command.Output(); err != nil {
+	if stdout, _, err := Exec("git", "ls-remote", "--heads"); err != nil {
 		return nil, err
 	} else {
 		r := make([]string, 0)
-		readbuffer := bytes.NewBuffer(data)
+		readbuffer := bytes.NewBuffer(stdout)
 		reader := bufio.NewReader(readbuffer)
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
@@ -291,23 +280,23 @@ func DupCheck() error {
 	return nil
 }
 
-func walkToGitRoot(dir string) (string, error) {
+func WalkToGitRoot(dir string) (string, error) {
 	fileInfo, err := os.Stat(dir + "/.git")
 	if err != nil {
 		if os.IsNotExist(err) {
-			return walkToGitRoot(dir + "/..")
+			return WalkToGitRoot(dir + "/..")
 		} else {
 			return "", err
 		}
 	}
 	if fileInfo == nil {
-		return walkToGitRoot(dir + "/..")
+		return WalkToGitRoot(dir + "/..")
 	}
 	if fileInfo.IsDir() {
 		return dir, nil
 	} else {
 		// weird that a .git inode exists but it is not a directory
-		return walkToGitRoot(dir + "/..")
+		return WalkToGitRoot(dir + "/..")
 	}
 }
 

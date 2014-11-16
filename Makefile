@@ -2,7 +2,7 @@ LD_FLAGS := -X main.commit $(shell git rev-parse --short HEAD)
 
 all: deps
 	go clean
-	godep go test
+	godep go test -v
 	godep go build -ldflags "$(LD_FLAGS)"
 
 deps:
