@@ -107,7 +107,7 @@ func BranchCompat() error {
 			continue
 		}
 
-		effectiveVersion, err := pomVersion(pomFile)
+		effectiveVersion, err := PomVersion(pomFile)
 		if err != nil {
 			return err
 		}
@@ -248,10 +248,10 @@ func GetBranches() ([]string, error) {
 
 func DupCheck() error {
 	if err := GitFetch(); err != nil {
-		fmt.Errorf("Error in git-fetch: %v\n", err)
+		return fmt.Errorf("Error in git-fetch: %v\n", err)
 	}
 	if branches, err := GetBranches(); err != nil {
-		fmt.Errorf("Error getting remote heads: %v\n", err)
+		return fmt.Errorf("Error getting remote heads: %v\n", err)
 	} else {
 		t := make(map[string][]string)
 		for _, branch := range branches {
@@ -261,7 +261,7 @@ func DupCheck() error {
 			if err := GitCheckoutBranch(branch); err != nil {
 				return fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
 			}
-			effectiveVersion, err := pomVersion("pom.xml")
+			effectiveVersion, err := PomVersion("pom.xml")
 			if err != nil {
 				return err
 			}
@@ -300,7 +300,7 @@ func WalkToGitRoot(dir string) (string, error) {
 	}
 }
 
-func pomVersion(pomFile string) (string, error) {
+func PomVersion(pomFile string) (string, error) {
 	data, err := ioutil.ReadFile(pomFile)
 	if err != nil {
 		return "", err
