@@ -32,17 +32,17 @@ var (
 	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
 	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.")
 
-	skipMap map[string]string
-	commit  string
+	excludesMap map[string]string
+	commit      string
 )
 
 func init() {
 	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 	flag.Parse()
 	a := strings.Split(*excludes, ",")
-	skipMap = make(map[string]string, len(a))
+	excludesMap = make(map[string]string, len(a))
 	for _, v := range a {
-		skipMap[v] = ""
+		excludesMap[v] = ""
 	}
 }
 
@@ -111,7 +111,7 @@ func BranchCompat() error {
 			log.Printf("Analyzing %s\n", pomFile)
 		}
 
-		if _, present := skipMap[pomFile]; present {
+		if _, present := excludesMap[pomFile]; present {
 			if debug {
 				log.Printf("Skipping excluded pom: %s\n", pomFile)
 			}
