@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestPomVersion(t *testing.T) {
-	version, err := PomVersion("test-data/no-parent-pom.xml")
+	version, err := PomVersion("test-data/no-parent/pom.xml")
 	if err != nil {
 		t.Fatalf("No expecting an error, but got one: %v\n", err)
 	}
@@ -13,7 +13,7 @@ func TestPomVersion(t *testing.T) {
 }
 
 func TestPomWithParentVersion(t *testing.T) {
-	version, err := PomVersion("test-data/with-parent-pom.xml")
+	version, err := PomVersion("test-data/with-parent/pom.xml")
 	if err != nil {
 		t.Fatalf("No expecting an error, but got one: %v\n", err)
 	}
@@ -23,7 +23,7 @@ func TestPomWithParentVersion(t *testing.T) {
 }
 
 func TestPomWithOverriddenParentVersion(t *testing.T) {
-	version, err := PomVersion("test-data/with-parent-but-override-version-pom.xml")
+	version, err := PomVersion("test-data/with-parent-but-override-version/pom.xml")
 	if err != nil {
 		t.Fatalf("No expecting an error, but got one: %v\n", err)
 	}
