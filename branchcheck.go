@@ -130,16 +130,10 @@ func BranchCompat() error {
 }
 
 func CurrentBranch() (string, error) {
-	cmd := "git"
-	args := []string{"rev-parse", "--abbrev-ref", "HEAD"}
-	if debug {
-		log.Printf("%s %v\n", cmd, args)
-	}
-	command := exec.Command(cmd, args...)
-	if data, err := command.Output(); err != nil {
+	if stdout, _, err := Exec("git", "rev-parse", "--abbrev-ref", "HEAD"); err != nil {
 		return "", err
 	} else {
-		return string(data[:len(data)-1]), nil
+		return string(stdout[:len(stdout)-1]), nil
 	}
 }
 
