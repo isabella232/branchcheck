@@ -53,8 +53,19 @@ func main() {
 	}
 
 	if *versionDupCheck {
-		if err := DupCheck(); err != nil {
-			log.Printf("error running dup-check: %v\n", err)
+		if versionOccurrenceMap, err := DupCheck(); err != nil {
+			log.Fatalf("error running main.DupCheck(): %v\n", err)
+		} else {
+			someMultiples := false
+			for k, v := range versionOccurrenceMap {
+				if len(v) > 1 {
+					someMultiples = true
+					log.Printf("multiple branches %+v with version %s\n", v, k)
+				}
+			}
+			if someMultiples {
+				os.Exit(1)
+			}
 		}
 		return
 	}
@@ -241,38 +252,38 @@ func GetBranches() ([]string, error) {
 	}
 }
 
-func DupCheck() error {
+/*
+DupCheck returns a version-indexed map of slices of branches.  An entry t[s] returns a slice of all branch names with POM version s.
+*/
+func DupCheck() (map[string][]string, error) {
 	if err := GitFetch(); err != nil {
-		return fmt.Errorf("Error in git-fetch: %v\n", err)
+		return nil, fmt.Errorf("Error in git-fetch: %v\n", err)
 	}
-	if branches, err := GetBranches(); err != nil {
-		return fmt.Errorf("Error getting remote heads: %v\n", err)
-	} else {
-		t := make(map[string][]string)
-		for _, branch := range branches {
-			if err := GitStash(); err != nil {
-				return fmt.Errorf("Cannot stash to clean workspace on branch %s: %v\n", branch, err)
-			}
-			if err := GitCheckoutBranch(branch); err != nil {
-				return fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
-			}
-			effectiveVersion, err := PomVersion("pom.xml")
-			if err != nil {
-				return err
-			}
-			_, present := t[effectiveVersion]
-			if !present {
-				t[effectiveVersion] = make([]string, 0)
-			}
-			t[effectiveVersion] = append(t[effectiveVersion], branch)
-		}
-		for k, v := range t {
-			if len(v) > 1 {
-				log.Printf("multiple branches %+v with version %s\n", v, k)
-			}
-		}
+
+	branches, err := GetBranches()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting remote heads: %v\n", err)
 	}
-	return nil
+
+	t := make(map[string][]string)
+	for _, branch := range branches {
+		if err := GitStash(); err != nil {
+			return nil, fmt.Errorf("Cannot stash to clean workspace on branch %s: %v\n", branch, err)
+		}
+		if err := GitCheckoutBranch(branch); err != nil {
+			return nil, fmt.Errorf("Cannot checkout branch %s: %v\n", branch, err)
+		}
+		effectiveVersion, err := PomVersion("pom.xml")
+		if err != nil {
+			return nil, err
+		}
+		_, present := t[effectiveVersion]
+		if !present {
+			t[effectiveVersion] = make([]string, 0)
+		}
+		t[effectiveVersion] = append(t[effectiveVersion], branch)
+	}
+	return t, nil
 }
 
 func WalkToGitRoot(dir string) (string, error) {
