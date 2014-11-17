@@ -286,26 +286,6 @@ func DupCheck() (map[string][]string, error) {
 	return t, nil
 }
 
-func WalkToGitRoot(dir string) (string, error) {
-	fileInfo, err := os.Stat(dir + "/.git")
-	if err != nil {
-		if os.IsNotExist(err) {
-			return WalkToGitRoot(dir + "/..")
-		} else {
-			return "", err
-		}
-	}
-	if fileInfo == nil {
-		return WalkToGitRoot(dir + "/..")
-	}
-	if fileInfo.IsDir() {
-		return dir, nil
-	} else {
-		// weird that a .git inode exists but it is not a directory
-		return WalkToGitRoot(dir + "/..")
-	}
-}
-
 func PomVersion(pomFile string) (string, error) {
 	data, err := ioutil.ReadFile(pomFile)
 	if err != nil {
