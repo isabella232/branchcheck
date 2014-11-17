@@ -30,7 +30,7 @@ var (
 	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml")
 	version         = flag.Bool("version", false, "Print git commit from which we were built")
 	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
-	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.")
+	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.  If version-dups is set, branch compat will not be run.")
 
 	excludesMap map[string]string
 	commit      string
