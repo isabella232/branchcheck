@@ -31,6 +31,7 @@ var (
 	version         = flag.Bool("version", false, "Print git commit from which we were built")
 	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
 	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.  If version-dups is set, branch compat will not be run.")
+	pomVersion      = flag.Bool("pom-version", false, "Display POM version for ./pom.xml.")
 
 	excludesMap map[string]string
 	commit      string
@@ -50,6 +51,31 @@ func main() {
 	log.Printf("branchcheck build commit ID: %s\n", commit)
 	if *version {
 		os.Exit(0)
+	}
+
+	if *pomVersion {
+		if _, err := os.Stat(".git"); err != nil && os.IsNotExist(err) {
+			log.Fatalf("This command must be run from the top level of the repository: %v\n", err)
+		}
+
+		data, err := ioutil.ReadFile("pom.xml")
+		if err != nil {
+			log.Fatalf("Error reading ./pom.xml: %v\n", err)
+		}
+
+		var pom POM
+		reader := bytes.NewBuffer(data)
+		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
+			log.Fatalf("Error deserializing ./pom.xml to XML: %v\n", err)
+		}
+
+		if pom.Version == "" && pom.Parent.Version == "" {
+			log.Fatalf("pom version and parent are both empty in pom.xml\n")
+		}
+
+		fmt.Printf("pom version: %s\n", pom.Version)
+
+		return
 	}
 
 	if *versionDupCheck {
