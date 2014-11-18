@@ -241,7 +241,8 @@ func Exec(cmd string, args ...string) ([]byte, []byte, error) {
 }
 
 func GitFetch() error {
-	if _, _, err := Exec("git", "fetch"); err != nil {
+	if _, stderr, err := Exec("git", "fetch"); err != nil {
+		log.Printf("%s\n", string(stderr))
 		return err
 	}
 	return nil
