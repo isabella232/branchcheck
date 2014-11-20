@@ -26,19 +26,18 @@ type POM struct {
 }
 
 var (
-	debug           bool
 	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml).  Used with branch-compat.")
 	version         = flag.Bool("version", false, "Print git commit from which we were built")
 	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
 	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.  If version-dups is set, branch compat will not be run.")
 	pomVersion      = flag.Bool("pom-version", false, "Display POM version for ./pom.xml.")
+	debug           = flag.Bool("debug", false, "Log debug info to the console.")
 
 	excludesMap map[string]string
 	commit      string
 )
 
 func init() {
-	debug = strings.ToLower(os.Getenv("BRANCHCHECK_DEBUG")) == "true"
 	flag.Parse()
 	a := strings.Split(*excludes, ",")
 	excludesMap = make(map[string]string, len(a))
@@ -119,7 +118,7 @@ func BranchCompat() error {
 		return fmt.Errorf("You are not on a branch.\n")
 	}
 
-	if debug {
+	if *debug {
 		log.Printf("Analyzing branch %s\n", branch)
 	}
 
@@ -133,12 +132,12 @@ func BranchCompat() error {
 	}
 
 	for _, pomFile := range poms {
-		if debug {
+		if *debug {
 			log.Printf("Analyzing %s\n", pomFile)
 		}
 
 		if _, present := excludesMap[pomFile]; present {
-			if debug {
+			if *debug {
 				log.Printf("Skipping excluded pom: %s\n", pomFile)
 			}
 			continue
@@ -219,14 +218,14 @@ func FindPoms(dir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if debug {
+	if *debug {
 		log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
 }
 
 func Exec(cmd string, args ...string) ([]byte, []byte, error) {
-	if debug {
+	if *debug {
 		log.Printf("%s %v\n", cmd, args)
 	}
 	stdout := &bytes.Buffer{}
@@ -332,14 +331,14 @@ func PomVersion(pomFile string) (string, error) {
 	var effectiveVersion string
 	if pom.Version == "" {
 		effectiveVersion = pom.Parent.Version
-		if debug {
+		if *debug {
 			log.Printf("Using parent-version in pom %s\n", pomFile)
 		}
 	} else {
 		effectiveVersion = pom.Version
 	}
 
-	if debug {
+	if *debug {
 		log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
 	}
 
