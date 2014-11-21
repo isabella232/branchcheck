@@ -78,7 +78,14 @@ func main() {
 	}
 
 	if *versionDupCheck {
+		CurrentBranch, err := CurrentBranch()
+		if err != nil {
+			log.Fatalf("Cannot get current branch; %v\n", err)
+		}
+		defer GitCheckoutBranch(CurrentBranch)
+
 		if versionOccurrenceMap, err := DupCheck(); err != nil {
+			GitCheckoutBranch(CurrentBranch)
 			log.Fatalf("error running main.DupCheck(): %v\n", err)
 		} else {
 			someMultiples := false
@@ -88,6 +95,7 @@ func main() {
 					log.Printf("multiple branches %+v with version %s\n", v, k)
 				}
 			}
+			GitCheckoutBranch(CurrentBranch)
 			if someMultiples {
 				os.Exit(1)
 			}
