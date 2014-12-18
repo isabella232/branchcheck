@@ -45,9 +45,6 @@ line switch
 
      branchcheck -excludes apath/pom.xml,bpath/pom.xml
 
-Version duplicate checking
-==========================
-
 Verify that no two branches claim the same Maven artifact version in the top level POM
 ======================================================================================
 
@@ -55,13 +52,23 @@ Verify that no two branches claim the same Maven artifact version in the top lev
 
 Branch duplicate verification requires network access to the Git remote for purposes of running git-fetch and git-ls-remote.
 
+Print the version claimed by the pom.xml file in the current working directory
+==============================================================================
+
+     branchcheck -pom-version
+
 Logging
 =======
 
-Set the BRANCHCHECK_DEBUG environment variable to "true" for some debug:
+Set the debug flag to debug:
 
-     $ BRANCHCHECK_DEBUG=true branchcheck
+     $ branchcheck -debug
      2014/10/15 17:28:21 git [rev-parse --abbrev-ref HEAD]
      2014/10/15 17:28:21 Validating branch master
      2014/10/15 17:28:21 Analyzing pom.xml
      2014/10/15 17:28:21 master is a feature branch: false
+
+Help
+====
+
+     $ branchcheck -h
