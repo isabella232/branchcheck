@@ -36,7 +36,9 @@ If you want to modify branchcheck
 
      $ cd $GOPATH/src/github.com/xoom/branchcheck
      $ go test
-     $ go build # or make
+     $ make
+
+Making the package target requires fpm, available from https://github.com/jordansissel/fpm.
 
 Branch name / POM version verification
 ======================================
