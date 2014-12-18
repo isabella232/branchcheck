@@ -7,8 +7,11 @@ all POMs in a tree.  Versions on branch develop must be named
 major.minor-SNAPSHOT.  Feature branches follow jgitflow naming:
 major.minor-xx_dddd-SNAPSHOT.  This check is enabled by default.
 
-Branchcheck will also iterate over a repository's branches and verify that no two
-branches have the same stated Maven POM version.  This check is enabled with the -version-dups switch.
+Branchcheck will also iterate over a repository's branches and
+verify that no two branches have the same stated Maven POM version.
+This check is enabled with the -version-dups switch.
+
+Output the Maven version stated in ./pom.xml with -pom-version.
 
 Go install
 ==========
