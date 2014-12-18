@@ -12,3 +12,8 @@ all:
 	go build -ldflags "$(LD_FLAGS)"
 	GOOS=linux GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-linux
 
+package: all
+	rm -f *.deb *.rpm
+	fpm -s dir -t deb -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --prefix /usr/local/bin branchcheck-linux
+	fpm -s dir -t rpm --rpm-os linux -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --prefix /usr/local/bin branchcheck-linux
+

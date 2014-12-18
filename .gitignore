@@ -1,2 +1,4 @@
 branchcheck
 branchcheck-linux
+*.rpm
+*.deb
