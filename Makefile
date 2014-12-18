@@ -7,6 +7,7 @@ SDK_INFO := $(shell go version)
 LD_FLAGS := -X main.version $(VERSION) -X main.commit $(COMMIT_ID) -X main.buildTime '$(DATE)' -X main.sdkInfo '$(SDK_INFO)'
 
 all: 
+	rm -f branchcheck-linux
 	go clean
 	go test -v
 	go build -ldflags "$(LD_FLAGS)"
@@ -14,6 +15,9 @@ all:
 
 package: all
 	rm -f *.deb *.rpm
-	fpm -s dir -t deb -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin branchcheck-linux
-	fpm -s dir -t rpm --rpm-os linux -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin branchcheck-linux
+	rm -rf  packaging
+	mkdir -p packaging
+	cp branchcheck-linux packaging/branchcheck
+	fpm -s dir -t deb -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
+	fpm -s dir -t rpm --rpm-os linux -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
 
