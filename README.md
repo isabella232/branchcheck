@@ -1,11 +1,17 @@
 Branchcheck
 ===========
 
-A git pre-commit hook in support of jgitflow branch naming to verify
+A git-related tool in support of gitflow branch naming to verify
 the branch name is consistent with the stated artifact version in
 all POMs in a tree.  Versions on branch develop must be named
 major.minor-SNAPSHOT.  Feature branches follow jgitflow naming:
-major.minor-xx_dddd-SNAPSHOT.
+major.minor-xx_dddd-SNAPSHOT.  This check is enabled by default.
+
+Branchcheck will also iterate over a repository's branches and
+verify that no two branches have the same stated Maven POM version.
+This check is enabled with the -version-dups switch.
+
+Output the Maven version stated in ./pom.xml with -pom-version.
 
 Go install
 ==========
@@ -32,21 +38,40 @@ If you want to modify branchcheck
      $ go test
      $ go build # or make
 
-Exclusions
-==========
+Branch name / POM version verification
+======================================
+
+Verify that for the current branch, the branch name and Maven POM versions are consistent.
 
 There may be POMs that you wish to exclude from processing.  Notate these with the -excludes command 
 line switch
 
      branchcheck -excludes apath/pom.xml,bpath/pom.xml
 
+Verify that no two branches claim the same Maven artifact version in the top level POM
+======================================================================================
+
+     branchcheck -version-dups
+
+Branch duplicate verification requires network access to the Git remote for purposes of running git-fetch and git-ls-remote.
+
+Print the version claimed by the pom.xml file in the current working directory
+==============================================================================
+
+     branchcheck -pom-version
+
 Logging
 =======
 
-Set the BRANCHCHECK_DEBUG environment variable to "true" for some debug:
+Set the debug flag to debug:
 
-     $ BRANCHCHECK_DEBUG=true branchcheck
+     $ branchcheck -debug
      2014/10/15 17:28:21 git [rev-parse --abbrev-ref HEAD]
      2014/10/15 17:28:21 Validating branch master
      2014/10/15 17:28:21 Analyzing pom.xml
      2014/10/15 17:28:21 master is a feature branch: false
+
+Help
+====
+
+     $ branchcheck -h
