@@ -35,10 +35,7 @@ var (
 
 	excludesMap map[string]string
 
-	commit    string
-	version   string
-	buildTime string
-	sdkInfo   string
+	buildInfo string
 )
 
 func init() {
@@ -51,7 +48,7 @@ func init() {
 }
 
 func main() {
-	log.Printf("branchcheck build version %s, commit ID: %s, buildTime: %s, sdkInfo: %s\n", version, commit, buildTime, sdkInfo)
+	log.Printf("branchcheck: %s\n", buildInfo)
 	if *info {
 		os.Exit(0)
 	}
