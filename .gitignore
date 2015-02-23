@@ -2,3 +2,6 @@ branchcheck
 branchcheck-linux
 *.rpm
 *.deb
+branchcheck-darwin-amd64
+branchcheck-linux-amd64
+branchcheck-windows-amd64
