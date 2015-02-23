@@ -21,4 +21,4 @@ package: all
 clean:
 	rm -rf *.deb *.rpm packaging
 	go clean
-	rm branchcheck-*-amd64
+	rm -f branchcheck*amd64
