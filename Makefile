@@ -7,11 +7,12 @@ SDK_INFO := $(shell go version)
 LD_FLAGS := -X main.buildInfo 'Version: $(VERSION), commitID: $(COMMIT_ID), build date: $(DATE), SDK: $(SDK_INFO)'
 
 all: 
-	rm -f branchcheck-linux
+	rm -f branchcheck-*-amd64
 	go clean
 	go test -v
-	go build -ldflags "$(LD_FLAGS)"
-	GOOS=linux GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-linux
+	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-darwin-amd64
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-linux-amd64
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-windows-amd64
 
 package: all
 	rm -f *.deb *.rpm
