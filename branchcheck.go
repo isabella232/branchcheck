@@ -191,7 +191,7 @@ func IsValidFeatureVersion(branch, version string) bool {
 
 	// normalize the story part of the branch by lowercasing and filtering out any non-digit and non-letter characters
 	var normalizedStory string
-	for _, v := range strings.ToLower(parts[1]) {
+	for _, v := range parts[1] {
 		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
 			normalizedStory = normalizedStory + string(v)
 		}
@@ -199,13 +199,21 @@ func IsValidFeatureVersion(branch, version string) bool {
 
 	// normalize the POM version by lowercasing and filtering out any non-digit and non-letter characters
 	var normalizedVersion string
-	for _, v := range strings.ToLower(version) {
+	for _, v := range version {
 		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
 			normalizedVersion = normalizedVersion + string(v)
 		}
 	}
 
-	return strings.HasSuffix(normalizedVersion, normalizedStory+"snapshot")
+	result := strings.HasSuffix(normalizedVersion, normalizedStory+"SNAPSHOT")
+	if !result {
+		a := strings.ToLower(normalizedVersion)
+		b := strings.ToLower(normalizedStory + "SNAPSHOT")
+		if strings.HasSuffix(a, b) {
+			log.Printf("POM version and branch name appear to differ in case.\n")
+		}
+	}
+	return result
 }
 
 func IsValidDevelopVersion(version string) bool {
