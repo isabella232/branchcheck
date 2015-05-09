@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"unicode"
 )
 
 type POM struct {
@@ -182,38 +181,50 @@ func CurrentBranch() (string, error) {
 	}
 }
 
+func truncateSnapshot(version string) string {
+	return version[0:strings.Index(version, "-SNAPSHOT")]
+}
+
+func normalizeStoryPart(story string) string {
+	normalizedStory := strings.ToLower(story)
+	if strings.Contains(story, "-") {
+		normalizedStory = strings.Replace(normalizedStory, "-", "_", -1)
+	}
+	return normalizedStory
+}
+
 func IsValidFeatureVersion(branch, version string) bool {
-	// local convention that a feature branch has the form a/b.
-	parts := strings.Split(branch, "/")
-	if len(parts) != 2 {
+	// The POM version must end in -SNAPSHOT.
+	if !strings.HasSuffix(version, "-SNAPSHOT") {
+		log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
 		return false
 	}
 
-	// normalize the story part of the branch by lowercasing and filtering out any non-digit and non-letter characters
-	var normalizedStory string
-	for _, v := range parts[1] {
-		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
-			normalizedStory = normalizedStory + string(v)
-		}
+	// local convention that a feature branch has the form a/b.
+	branchParts := strings.Split(branch, "/")
+	if len(branchParts) != 2 {
+		return false
 	}
 
-	// normalize the POM version by lowercasing and filtering out any non-digit and non-letter characters
-	var normalizedVersion string
-	for _, v := range version {
-		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
-			normalizedVersion = normalizedVersion + string(v)
-		}
-	}
+	// For a branch named feature/ABC-2, story == ABC-2.
+	story := branchParts[1]
 
-	result := strings.HasSuffix(normalizedVersion, normalizedStory+"SNAPSHOT")
-	if !result {
-		a := strings.ToLower(normalizedVersion)
-		b := strings.ToLower(normalizedStory + "SNAPSHOT")
-		if strings.HasSuffix(a, b) {
-			log.Printf("POM version and branch name appear to differ in case.\n")
+	// For a story ABC-2, normalizedStory is abc_2
+	normalizedStory := normalizeStoryPart(story)
+
+	// For a version 1.0-abc_2-SNAPSHOT, truncatedVersion is 1.0-abc_2
+	truncatedVersion := truncateSnapshot(version)
+
+	branchValidates := strings.HasSuffix(truncatedVersion, normalizedStory)
+
+	if !branchValidates {
+		if strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(normalizedStory)) {
+			log.Printf("POM version should be lowercased per jgitflow standard.\n")
+		} else {
+			log.Printf("POM version may differ in case and '-' -> '_' token replacement per jgitflow standard.\n")
 		}
 	}
-	return result
+	return branchValidates
 }
 
 func IsValidDevelopVersion(version string) bool {
