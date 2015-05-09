@@ -13,7 +13,7 @@ func TestFeatureValid(t *testing.T) {
 		"0.0-prj_4385_tok_tik_tx_trailer-SNAPSHOT": "feature/PRJ-4385-tok-tik-tx-trailer",
 	}
 	for version, branch := range branches {
-		b := IsValidFeatureVersion(branch, version)
+		b := IsBranchVersionCompatible(branch, version)
 		if !b {
 			t.Fatalf("IsValidFeatureBranch(%s,%s) expecting true", branch, version)
 		}
@@ -28,7 +28,7 @@ func TestFeatureNotValid(t *testing.T) {
 		"1.0-SNAPSHOT":         "somebranch",       // branches without a "/" in the name are not valid here
 	}
 	for version, branch := range branches {
-		b := IsValidFeatureVersion(branch, version)
+		b := IsBranchVersionCompatible(branch, version)
 		if b {
 			t.Fatalf("IsValidFeatureBranch(%s,%s) expecting true", branch, version)
 		}
@@ -56,21 +56,28 @@ func TestInvalidDevelopVersion(t *testing.T) {
 }
 
 func TestTruncateSnapshot(t *testing.T) {
-	if truncateSnapshot("1.0-SNAPSHOT") != "1.0" {
+	r, ok := normalizeVersion("1.0-SNAPSHOT")
+	if !ok {
+		t.Fatalf("Branch has -SNAPSHOT suffix")
+	}
+	if r != "1.0" {
 		t.Fatalf("Want 1.0")
+	}
+	if _, ok := normalizeVersion("1.0"); ok {
+		t.Fatalf("Want not ok.  No -SNAPSHOT suffix.")
 	}
 }
 
 func TestNormalizeStory(t *testing.T) {
-	if normalizeStoryPart("PRJ-2") != "prj_2" {
+	if normalizeStory("PRJ-2") != "prj_2" {
 		t.Fatalf("Want prj_2")
 	}
 
-	if normalizeStoryPart("PRJ2") != "prj2" {
+	if normalizeStory("PRJ2") != "prj2" {
 		t.Fatalf("Want prj2")
 	}
 
-	if normalizeStoryPart("PRJ_2") != "prj_2" {
+	if normalizeStory("PRJ_2") != "prj_2" {
 		t.Fatalf("Want prj_2")
 	}
 }
