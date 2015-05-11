@@ -58,10 +58,10 @@ func TestInvalidDevelopVersion(t *testing.T) {
 func TestTruncateSnapshot(t *testing.T) {
 	r, ok := normalizeVersion("1.0-SNAPSHOT")
 	if !ok {
-		t.Fatalf("Branch has -SNAPSHOT suffix")
+		t.Fatalf("Branch has the expected -SNAPSHOT suffix")
 	}
 	if r != "1.0" {
-		t.Fatalf("Want 1.0")
+		t.Fatalf("Want 1.0 but got %s\n", r)
 	}
 	if _, ok := normalizeVersion("1.0"); ok {
 		t.Fatalf("Want not ok.  No -SNAPSHOT suffix.")
@@ -79,5 +79,11 @@ func TestNormalizeStory(t *testing.T) {
 
 	if normalizeStory("PRJ_2") != "prj_2" {
 		t.Fatalf("Want prj_2")
+	}
+}
+
+func TestStoryPart(t *testing.T) {
+	if s, ok := storyPart("a/b"); !ok || s != "b" {
+		t.Fatalf("Want ok, b but got %v,%s\n", ok, s)
 	}
 }
