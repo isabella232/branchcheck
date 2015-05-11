@@ -12,6 +12,7 @@ func TestFeatureValid(t *testing.T) {
 		"1.2.3-123-SNAPSHOT":                       "hotfix/123",
 		"0.0-prj_4385_tok_tik_tx_trailer-SNAPSHOT": "feature/PRJ-4385-tok-tik-tx-trailer",
 		"1.1.32.1-PRJ-000-hotfix-test-SNAPSHOT":    "hotfix/1.1.32.1-PRJ-000-hotfix-test",
+		"1.1.32.1-PRJ-000-XXX-hotfix-test-SNAPSHOT":    "hotfix/1.1.32.1-PRJ-000-xxx-hotfix-test",
 	}
 	for version, branch := range branches {
 		b := IsBranchVersionCompatible(branch, version)

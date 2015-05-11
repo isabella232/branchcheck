@@ -202,10 +202,18 @@ func IsBranchVersionCompatible(branch, version string) bool {
 		normalizedStory := normalizeStory(story)
 
 		// The branch validates if 1.0-abc_2 has-suffix abc_2 respecting case
-		return strings.HasSuffix(truncatedVersion, normalizedStory)
+		validates := strings.HasSuffix(truncatedVersion, normalizedStory)
+		if !validates {
+			log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> and replaced - with _.\n", version)
+		}
+		return validates
 	case "hotfix":
 		// The branch validates if 1.0-abc-2 has-suffix abc-2 independent of case
-		return strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
+		validates := strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
+		if !validates {
+			log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved branch case and retained uses of '-'.\n", version)
+		}
+		return validates
 	}
 	log.Printf("Unknown branch prefix: %s\n", branchPrefix)
 	return false
