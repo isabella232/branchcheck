@@ -182,37 +182,37 @@ func CurrentBranch() (string, error) {
 }
 
 func IsBranchVersionCompatible(branch, version string) bool {
-	// For a branch feature/ABC-2, the story is ABC-2
-	story, ok := storyPart(branch)
+	// For a branch feature/ABC-2, the branch prefix == feature and the story == ABC-2
+	branchPrefix, story, ok := branchParts(branch)
 	if !ok {
+		log.Printf("branch name is malformed: %s\n", branch)
 		return false
 	}
-
-	// For a story ABC-2, normalizedStory is abc_2
-	normalizedStory := normalizeStory(story)
 
 	// For a version 1.0-abc_2-SNAPSHOT, truncatedVersion is 1.0-abc_2
-	normalizedVersion, ok := normalizeVersion(version)
+	truncatedVersion, ok := truncateVersion(version)
 	if !ok {
+		log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
 		return false
 	}
 
-	// The branch validates if 1.0-abc_2 has-suffix abc_2
-	branchValidates := strings.HasSuffix(normalizedVersion, normalizedStory)
+	switch branchPrefix {
+	case "feature":
+		// For a story ABC-2, normalizedStory is abc_2
+		normalizedStory := normalizeStory(story)
 
-	if !branchValidates {
-		if strings.HasSuffix(strings.ToLower(normalizedVersion), strings.ToLower(normalizedStory)) {
-			log.Printf("POM version should be lowercased per jgitflow standard.\n")
-		} else {
-			log.Printf("POM version may differ in case and '-' -> '_' token replacement per jgitflow standard.\n")
-		}
+		// The branch validates if 1.0-abc_2 has-suffix abc_2 respecting case
+		return strings.HasSuffix(truncatedVersion, normalizedStory)
+	case "hotfix":
+		// The branch validates if 1.0-abc-2 has-suffix abc-2 independent of case
+		return strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
 	}
-	return branchValidates
+	log.Printf("Unknown branch prefix: %s\n", branchPrefix)
+	return false
 }
 
-func normalizeVersion(version string) (string, bool) {
+func truncateVersion(version string) (string, bool) {
 	if !strings.HasSuffix(version, "-SNAPSHOT") {
-		log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
 		return "", false
 	}
 	return version[0:strings.Index(version, "-SNAPSHOT")], true
@@ -223,14 +223,12 @@ func normalizeStory(story string) string {
 	return strings.Replace(s, "-", "_", -1)
 }
 
-func storyPart(branch string) (string, bool) {
-	// local convention that a feature branch has the form a/b.
-	branchParts := strings.Split(branch, "/")
-	if len(branchParts) != 2 {
-		log.Printf("Branch %s has more than one /.\n", branch)
-		return "", false
+func branchParts(branch string) (string, string, bool) {
+	parts := strings.Split(branch, "/")
+	if len(parts) != 2 {
+		return "", "", false
 	}
-	return branchParts[1], true
+	return parts[0], parts[1], true
 }
 
 func IsValidDevelopVersion(version string) bool {
