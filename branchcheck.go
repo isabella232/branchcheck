@@ -185,7 +185,7 @@ func IsBranchVersionCompatible(branch, version string) bool {
 	// For a branch feature/ABC-2, the branch prefix == feature and the story == ABC-2
 	branchPrefix, story, ok := branchParts(branch)
 	if !ok {
-		log.Printf("branch name is malformed: %s\n", branch)
+		log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branch)
 		return false
 	}
 
