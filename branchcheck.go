@@ -169,7 +169,7 @@ func BranchCompat() error {
 			continue
 		}
 		if !IsBranchVersionCompatible(branch, effectiveVersion) {
-			return fmt.Errorf("Feature branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
+			return fmt.Errorf("Branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
 		}
 	}
 	return nil
