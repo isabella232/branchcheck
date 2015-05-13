@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"unicode"
 )
 
 type POM struct {
@@ -157,7 +156,9 @@ func BranchCompat() error {
 			return err
 		}
 		if strings.HasPrefix(effectiveVersion, "$") {
-			log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			if *debug {
+				log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			}
 			continue
 		}
 
@@ -167,8 +168,8 @@ func BranchCompat() error {
 			}
 			continue
 		}
-		if !IsValidFeatureVersion(branch, effectiveVersion) {
-			return fmt.Errorf("Feature branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
+		if !IsBranchVersionCompatible(branch, effectiveVersion) {
+			return fmt.Errorf("Branch %s has invalid version %s in %s\n", branch, effectiveVersion, pomFile)
 		}
 	}
 	return nil
@@ -182,30 +183,62 @@ func CurrentBranch() (string, error) {
 	}
 }
 
-func IsValidFeatureVersion(branch, version string) bool {
-	// local convention that a feature branch has the form a/b.
-	parts := strings.Split(branch, "/")
-	if len(parts) != 2 {
+func IsBranchVersionCompatible(branch, version string) bool {
+	// For a branch feature/ABC-2, the branch prefix == feature and the story == ABC-2
+	branchPrefix, story, ok := branchParts(branch)
+	if !ok {
+		log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branch)
 		return false
 	}
 
-	// normalize the story part of the branch by lowercasing and filtering out any non-digit and non-letter characters
-	var normalizedStory string
-	for _, v := range strings.ToLower(parts[1]) {
-		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
-			normalizedStory = normalizedStory + string(v)
-		}
+	// For a version 1.0-abc_2-SNAPSHOT, truncatedVersion is 1.0-abc_2
+	truncatedVersion, ok := truncateVersion(version)
+	if !ok {
+		log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
+		return false
 	}
 
-	// normalize the POM version by lowercasing and filtering out any non-digit and non-letter characters
-	var normalizedVersion string
-	for _, v := range strings.ToLower(version) {
-		if unicode.IsDigit(rune(v)) || unicode.IsLetter(rune(v)) {
-			normalizedVersion = normalizedVersion + string(v)
-		}
-	}
+	switch branchPrefix {
+	case "feature":
+		// For a story ABC-2, normalizedStory is abc_2
+		normalizedStory := normalizeStory(story)
 
-	return strings.HasSuffix(normalizedVersion, normalizedStory+"snapshot")
+		// The branch validates if 1.0-abc_2 has-suffix abc_2 respecting case
+		validates := strings.HasSuffix(truncatedVersion, normalizedStory)
+		if !validates {
+			log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced - with _.\n", branch, version)
+		}
+		return validates
+	case "hotfix":
+		// The branch validates if 1.0-abc-2 has-suffix abc-2 independent of case
+		validates := strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
+		if !validates {
+			log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branch, version)
+		}
+		return validates
+	}
+	log.Printf("Unknown branch prefix: %s\n", branchPrefix)
+	return false
+}
+
+func truncateVersion(version string) (string, bool) {
+	if !strings.HasSuffix(version, "-SNAPSHOT") {
+		return "", false
+	}
+	return version[0:strings.Index(version, "-SNAPSHOT")], true
+}
+
+func normalizeStory(story string) string {
+	s := strings.ToLower(story)
+	return strings.Replace(s, "-", "_", -1)
+}
+
+func branchParts(branch string) (string, string, bool) {
+	parts := strings.Split(branch, "/")
+	if len(parts) != 2 {
+		return "", "", false
+	}
+	return parts[0], parts[1], true
 }
 
 func IsValidDevelopVersion(version string) bool {
