@@ -156,7 +156,9 @@ func BranchCompat() error {
 			return err
 		}
 		if strings.HasPrefix(effectiveVersion, "$") {
-			log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			if *debug {
+				log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+			}
 			continue
 		}
 
