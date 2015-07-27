@@ -6,13 +6,13 @@ import (
 
 func TestFeatureValid(t *testing.T) {
 	branches := map[string]string{
-		"1.2-b-SNAPSHOT":                           "feature/b",
-		"1.1-us1922-SNAPSHOT":                      "feature/US1922",
-		"14.6-trnk_12-SNAPSHOT":                    "feature/TRNK-12",
-		"1.2.3-123-SNAPSHOT":                       "hotfix/123",
-		"0.0-prj_4385_tok_tik_tx_trailer-SNAPSHOT": "feature/PRJ-4385-tok-tik-tx-trailer",
-		"1.1.32.1-PRJ-000-hotfix-test-SNAPSHOT":    "hotfix/1.1.32.1-PRJ-000-hotfix-test",
-		"1.1.32.1-PRJ-000-XXX-hotfix-test-SNAPSHOT":    "hotfix/1.1.32.1-PRJ-000-xxx-hotfix-test",
+		"1.2-b-SNAPSHOT":                            "feature/b",
+		"1.1-us1922-SNAPSHOT":                       "feature/US1922",
+		"14.6-trnk_12-SNAPSHOT":                     "feature/TRNK-12",
+		"1.2.3-123-SNAPSHOT":                        "hotfix/123",
+		"0.0-prj_4385_tok_tik_tx_trailer-SNAPSHOT":  "feature/PRJ-4385-tok-tik-tx-trailer",
+		"1.1.32.1-PRJ-000-hotfix-test-SNAPSHOT":     "hotfix/1.1.32.1-PRJ-000-hotfix-test",
+		"1.1.32.1-PRJ-000-XXX-hotfix-test-SNAPSHOT": "hotfix/1.1.32.1-PRJ-000-xxx-hotfix-test",
 	}
 	for version, branch := range branches {
 		b := IsBranchVersionCompatible(branch, version)
@@ -27,8 +27,8 @@ func TestFeatureNotValid(t *testing.T) {
 		"1.2-b":                "a/b",              // no -SNAPSHOT
 		"1.1-US-1922-SNAPSHOT": "feature/US-19222", // wrong case
 		"1.1-US_1922-SNAPSHOT": "feature/US-19222", // wrong case and "-" not mapped to "_"
-		"2.0-SNAPSHOT":          "bug/US-19222", // prefix bug unknown
-		"1.0-SNAPSHOT": "somebranch",   // branches without a "/" in the name are not valid here
+		"2.0-SNAPSHOT":         "bug/US-19222",     // prefix bug unknown
+		"1.0-SNAPSHOT":         "somebranch",       // branches without a "/" in the name are not valid here
 	}
 	for version, branch := range branches {
 		b := IsBranchVersionCompatible(branch, version)
@@ -39,7 +39,7 @@ func TestFeatureNotValid(t *testing.T) {
 }
 
 func TestDevelopVersion(t *testing.T) {
-	versions := []string{"1.0-SNAPSHOT", "2.14-SNAPSHOT", "2.14.15-SNAPSHOT"}
+	versions := []string{"1.0-SNAPSHOT", "2.14-SNAPSHOT", "2.14.15-SNAPSHOT", "0.0.67-SNAPSHOT"}
 	for _, version := range versions {
 		b := IsValidDevelopVersion(version)
 		if !b {
