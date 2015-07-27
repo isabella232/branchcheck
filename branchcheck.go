@@ -244,7 +244,7 @@ func branchParts(branch string) (string, string, bool) {
 }
 
 func IsValidDevelopVersion(version string) bool {
-	match, _ := regexp.MatchString("[1-9]+(\\.[0-9]+)+-SNAPSHOT", version)
+	match, _ := regexp.MatchString("[0-9]+(\\.[0-9]+)+-SNAPSHOT", version)
 	return match
 }
 
