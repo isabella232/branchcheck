@@ -35,6 +35,8 @@ var (
 	excludesMap map[string]string
 
 	buildInfo string
+
+	Log = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
 func init() {
@@ -47,29 +49,29 @@ func init() {
 }
 
 func main() {
-	log.Printf("branchcheck: %s\n", buildInfo)
+	Log.Printf("branchcheck: %s\n", buildInfo)
 	if *info {
 		os.Exit(0)
 	}
 
 	if *pomVersion {
 		if _, err := os.Stat(".git"); err != nil && os.IsNotExist(err) {
-			log.Fatalf("This command must be run from the top level of the repository: %v\n", err)
+			Log.Fatalf("This command must be run from the top level of the repository: %v\n", err)
 		}
 
 		data, err := ioutil.ReadFile("pom.xml")
 		if err != nil {
-			log.Fatalf("Error reading ./pom.xml: %v\n", err)
+			Log.Fatalf("Error reading ./pom.xml: %v\n", err)
 		}
 
 		var pom POM
 		reader := bytes.NewBuffer(data)
 		if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
-			log.Fatalf("Error deserializing ./pom.xml to XML: %v\n", err)
+			Log.Fatalf("Error deserializing ./pom.xml to XML: %v\n", err)
 		}
 
 		if pom.Version == "" && pom.Parent.Version == "" {
-			log.Fatalf("pom version and parent are both empty in pom.xml\n")
+			Log.Fatalf("pom version and parent are both empty in pom.xml\n")
 		}
 
 		fmt.Printf("pom version: %s\n", pom.Version)
@@ -80,19 +82,19 @@ func main() {
 	if *versionDupCheck {
 		CurrentBranch, err := CurrentBranch()
 		if err != nil {
-			log.Fatalf("Cannot get current branch; %v\n", err)
+			Log.Fatalf("Cannot get current branch; %v\n", err)
 		}
 		defer GitCheckoutBranch(CurrentBranch)
 
 		if versionOccurrenceMap, err := DupCheck(); err != nil {
 			GitCheckoutBranch(CurrentBranch)
-			log.Fatalf("error running main.DupCheck(): %v\n", err)
+			Log.Fatalf("error running main.DupCheck(): %v\n", err)
 		} else {
 			someMultiples := false
 			for k, v := range versionOccurrenceMap {
 				if len(v) > 1 {
 					someMultiples = true
-					log.Printf("multiple branches %+v with version %s\n", v, k)
+					Log.Printf("multiple branches %+v with version %s\n", v, k)
 				}
 			}
 			GitCheckoutBranch(CurrentBranch)
@@ -105,8 +107,7 @@ func main() {
 
 	if *branchCompat {
 		if err := BranchCompat(); err != nil {
-			log.Printf("%v\n", err)
-			os.Exit(1)
+			Log.Fatalf("%v\n", err)
 		}
 		return
 	}
@@ -127,7 +128,7 @@ func BranchCompat() error {
 	}
 
 	if *debug {
-		log.Printf("Analyzing branch %s\n", branch)
+		Log.Printf("Analyzing branch %s\n", branch)
 	}
 
 	poms, err := FindPoms(".")
@@ -141,12 +142,12 @@ func BranchCompat() error {
 
 	for _, pomFile := range poms {
 		if *debug {
-			log.Printf("Analyzing %s\n", pomFile)
+			Log.Printf("Analyzing %s\n", pomFile)
 		}
 
 		if _, present := excludesMap[pomFile]; present {
 			if *debug {
-				log.Printf("Skipping excluded pom: %s\n", pomFile)
+				Log.Printf("Skipping excluded pom: %s\n", pomFile)
 			}
 			continue
 		}
@@ -157,7 +158,7 @@ func BranchCompat() error {
 		}
 		if strings.HasPrefix(effectiveVersion, "$") {
 			if *debug {
-				log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
+				Log.Printf("Skipping pom %s because of unresolvable token %s in version element\n", pomFile, effectiveVersion)
 			}
 			continue
 		}
@@ -187,14 +188,14 @@ func IsBranchVersionCompatible(branch, version string) bool {
 	// For a branch feature/ABC-2, the branch prefix == feature and the story == ABC-2
 	branchPrefix, story, ok := branchParts(branch)
 	if !ok {
-		log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branch)
+		Log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branch)
 		return false
 	}
 
 	// For a version 1.0-abc_2-SNAPSHOT, truncatedVersion is 1.0-abc_2
 	truncatedVersion, ok := truncateVersion(version)
 	if !ok {
-		log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
+		Log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
 		return false
 	}
 
@@ -206,20 +207,20 @@ func IsBranchVersionCompatible(branch, version string) bool {
 		// The branch validates if 1.0-abc_2 has-suffix abc_2 respecting case
 		validates := strings.HasSuffix(truncatedVersion, normalizedStory)
 		if !validates {
-			log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced - with _.\n", branch, version)
-			log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
+			Log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced - with _.\n", branch, version)
+			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
 		}
 		return validates
 	case "hotfix":
 		// The branch validates if 1.0-abc-2 has-suffix abc-2 independent of case
 		validates := strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
 		if !validates {
-			log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branch, version)
-			log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
+			Log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branch, version)
+			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
 		}
 		return validates
 	}
-	log.Printf("Unknown branch prefix: %s\n", branchPrefix)
+	Log.Printf("Unknown branch prefix: %s\n", branchPrefix)
 	return false
 }
 
@@ -263,14 +264,14 @@ func FindPoms(dir string) ([]string, error) {
 		return nil, err
 	}
 	if *debug {
-		log.Printf("found %d poms\n", len(files))
+		Log.Printf("found %d poms\n", len(files))
 	}
 	return files, nil
 }
 
 func Exec(cmd string, args ...string) ([]byte, []byte, error) {
 	if *debug {
-		log.Printf("%s %v\n", cmd, args)
+		Log.Printf("%s %v\n", cmd, args)
 	}
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -285,7 +286,7 @@ func Exec(cmd string, args ...string) ([]byte, []byte, error) {
 
 func GitFetch() error {
 	if _, stderr, err := Exec("git", "fetch"); err != nil {
-		log.Printf("git-fetch stderr: %s\n", string(stderr))
+		Log.Printf("git-fetch stderr: %s\n", string(stderr))
 		return err
 	}
 	return nil
@@ -365,6 +366,7 @@ func PomVersion(pomFile string) (string, error) {
 	var pom POM
 	reader := bytes.NewBuffer(data)
 	if err := xml.NewDecoder(reader).Decode(&pom); err != nil {
+		Log.Printf("Error unmarshaling POM %s to XML with content %v: %v\n", pomFile, data, err)
 		return "", err
 	}
 
@@ -376,14 +378,14 @@ func PomVersion(pomFile string) (string, error) {
 	if pom.Version == "" {
 		effectiveVersion = pom.Parent.Version
 		if *debug {
-			log.Printf("Using parent-version in pom %s\n", pomFile)
+			Log.Printf("Using parent-version in pom %s\n", pomFile)
 		}
 	} else {
 		effectiveVersion = pom.Version
 	}
 
 	if *debug {
-		log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
+		Log.Printf("effectiveVersion %s in pom %s\n", effectiveVersion, pomFile)
 	}
 
 	return effectiveVersion, nil
