@@ -86,26 +86,27 @@ func TestNormalizeStory(t *testing.T) {
 }
 
 func TestBranchPartsOK(t *testing.T) {
-	x, y, ok := branchParts("feature/PRJ-22")
-	if !ok {
-		t.Fatalf("Branch is well-formed.\n")
-	}
+	for _, v := range []string{
+		"feature/PRJ-22",
+		"feature/sub/PRJ-22",
+		"feature/sub/subsub/PRJ-22",
+	} {
+		branchType, story, ok := branchParts(v)
+		if !ok {
+			t.Fatalf("Branch is %s well-formed.\n", v)
+		}
 
-	if x != "feature" {
-		t.Fatalf("Want feature but got %s\n", x)
-	}
-
-	if y != "PRJ-22" {
-		t.Fatalf("Want PRJ-22 but got %s\n", y)
+		if branchType != "feature" {
+			t.Fatalf("Want feature but got %s\n", branchType)
+		}
+		if story != "PRJ-22" {
+			t.Fatalf("Want PRJ-22 but got %s\n", story)
+		}
 	}
 }
 
 func TestBranchPartsMalformed(t *testing.T) {
-	if _, _, ok := branchParts("feature/PRJ-22/2"); ok {
-		t.Fatalf("Branch with more than 1 / is not well-formed.\n")
-	}
-
 	if _, _, ok := branchParts("feature"); ok {
-		t.Fatalf("Branch without a single / is not well-formed.\n")
+		t.Fatalf("Branch without at least one / is not well-formed.\n")
 	}
 }

@@ -184,18 +184,18 @@ func CurrentBranch() (string, error) {
 	}
 }
 
-func IsBranchVersionCompatible(branch, version string) bool {
+func IsBranchVersionCompatible(branchName, effectivePOMVersion string) bool {
 	// For a branch feature/ABC-2, the branch prefix == feature and the story == ABC-2
-	branchPrefix, story, ok := branchParts(branch)
+	branchPrefix, story, ok := branchParts(branchName)
 	if !ok {
-		Log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branch)
+		Log.Printf("Branch name %s is malformed.  Valid branch names have the form [feature|hotfix]/<storypart>.\n", branchName)
 		return false
 	}
 
 	// For a version 1.0-abc_2-SNAPSHOT, truncatedVersion is 1.0-abc_2
-	truncatedVersion, ok := truncateVersion(version)
+	truncatedVersion, ok := truncateVersion(effectivePOMVersion)
 	if !ok {
-		Log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", version)
+		Log.Printf("POM version %s does not end in -SNAPSHOT.  This is not a feature branch.\n", effectivePOMVersion)
 		return false
 	}
 
@@ -207,7 +207,7 @@ func IsBranchVersionCompatible(branch, version string) bool {
 		// The branch validates if 1.0-abc_2 has-suffix abc_2 respecting case
 		validates := strings.HasSuffix(truncatedVersion, normalizedStory)
 		if !validates {
-			Log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced - with _.\n", branch, version)
+			Log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced all - with _.\n", branchName, effectivePOMVersion)
 			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
 		}
 		return validates
@@ -215,7 +215,7 @@ func IsBranchVersionCompatible(branch, version string) bool {
 		// The branch validates if 1.0-abc-2 has-suffix abc-2 independent of case
 		validates := strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
 		if !validates {
-			Log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branch, version)
+			Log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branchName, effectivePOMVersion)
 			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
 		}
 		return validates
@@ -237,11 +237,11 @@ func normalizeStory(story string) string {
 }
 
 func branchParts(branch string) (string, string, bool) {
-	parts := strings.Split(branch, "/")
-	if len(parts) != 2 {
+	if strings.Count(branch, "/") < 1 {
 		return "", "", false
 	}
-	return parts[0], parts[1], true
+	parts := strings.Split(branch, "/")
+	return parts[0], parts[len(parts)-1], true
 }
 
 func IsValidDevelopVersion(version string) bool {
