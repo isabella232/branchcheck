@@ -1,6 +1,6 @@
 NAME := branchcheck
 ARCH := amd64
-VERSION := 1.4
+VERSION := 1.6
 DATE := $(shell date)
 COMMIT_ID := $(shell git rev-parse --short HEAD)
 SDK_INFO := $(shell go version)
@@ -15,8 +15,8 @@ all: clean
 package: all
 	mkdir -p packaging
 	cp branchcheck-linux-amd64 packaging/$(NAME)
-	fpm -s dir -t deb -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
-	fpm -s dir -t rpm --rpm-os linux -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mark.petrovic@xoom.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
+	fpm -s dir -t deb -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mpetrovic@paypal.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
+	fpm -s dir -t rpm --rpm-os linux -v $(VERSION) -n $(NAME) -a amd64  -m"Mark Petrovic <mpetrovic@paypal.com>" --url https://github.com/xoom/branchcheck --iteration 1 --prefix /usr/local/bin -C packaging .
 
 clean:
 	rm -rf *.deb *.rpm packaging
