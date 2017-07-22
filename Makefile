@@ -1,16 +1,16 @@
 NAME := branchcheck
 ARCH := amd64
-VERSION := 1.6
+VERSION := 1.7
 DATE := $(shell date)
 COMMIT_ID := $(shell git rev-parse --short HEAD)
 SDK_INFO := $(shell go version)
-LD_FLAGS := -X main.buildInfo 'Version: $(VERSION), commitID: $(COMMIT_ID), build date: $(DATE), SDK: $(SDK_INFO)'
+LD_FLAGS := '-X "main.buildInfo=Version: $(VERSION), commitID: $(COMMIT_ID), build date: $(DATE), SDK: $(SDK_INFO)"'
 
 all: clean
 	go test -v
-	GOOS=darwin GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-darwin-amd64
-	GOOS=linux GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-linux-amd64
-	GOOS=windows GOARCH=amd64 go build -ldflags "$(LD_FLAGS)" -o branchcheck-windows-amd64
+	GOOS=darwin GOARCH=amd64 go build -ldflags $(LD_FLAGS) -o branchcheck-darwin-amd64
+	GOOS=linux GOARCH=amd64 go build -ldflags $(LD_FLAGS) -o branchcheck-linux-amd64
+	GOOS=windows GOARCH=amd64 go build -ldflags $(LD_FLAGS) -o branchcheck-windows-amd64
 
 package: all
 	mkdir -p packaging
