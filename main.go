@@ -25,12 +25,13 @@ type POM struct {
 }
 
 var (
-	excludes        = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml).  Used with branch-compat.")
-	info            = flag.Bool("version", false, "Print git commit from which we were built")
-	versionDupCheck = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
-	branchCompat    = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.  If version-dups is set, branch compat will not be run.")
-	pomVersion      = flag.Bool("pom-version", false, "Display POM version for ./pom.xml and exit.")
-	debug           = flag.Bool("debug", false, "Log debug info to the console.")
+	excludes            = flag.String("excludes", "", "comma-separated poms to exclude, by path relative to repository top level (e.g., a/pom.xml,b/pom.xml).  Used with branch-compat.")
+	info                = flag.Bool("version", false, "Print git commit from which we were built")
+	versionDupCheck     = flag.Bool("version-dups", false, "Iterate over all branches and check for duplicate POM versions.  Uses git ls-remote to get remote branches.")
+	branchCompat        = flag.Bool("branch-compat", true, "Verify branch name and POM versions are compatible.  If version-dups is set, branch compat will not be run.")
+	pomVersion          = flag.Bool("pom-version", false, "Display POM version for ./pom.xml and exit.")
+	branchNameMaxLength = flag.Int("branch-name-maxlen", 100, "Maximum branch name length")
+	debug               = flag.Bool("debug", false, "Log debug info to the console.")
 
 	excludesMap map[string]string
 
@@ -117,6 +118,10 @@ func BranchCompat() error {
 	branch, err := CurrentBranch()
 	if err != nil {
 		return fmt.Errorf("Cannot determine current branch name.  You may not be in a git repository: %v\n", err)
+	}
+
+	if len(branch) > *branchNameMaxLength {
+		return fmt.Errorf("Branch name %s exceeds Sonarqube max length of %d\n", branch, *branchNameMaxLength)
 	}
 
 	if branch == "master" {
@@ -208,7 +213,7 @@ func IsBranchVersionCompatible(branchName, effectivePOMVersion string) bool {
 		validates := strings.HasSuffix(truncatedVersion, normalizedStory)
 		if !validates {
 			Log.Printf("feature/ branch %s fails validation.  jgitflow would have lowered the case of the POM <version> %s and replaced all - with _.\n", branchName, effectivePOMVersion)
-			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
+			Log.Printf("See https://confluence.xoom.com/x/NIInAw\n")
 		}
 		return validates
 	case "hotfix":
@@ -216,7 +221,7 @@ func IsBranchVersionCompatible(branchName, effectivePOMVersion string) bool {
 		validates := strings.HasSuffix(strings.ToLower(truncatedVersion), strings.ToLower(story))
 		if !validates {
 			Log.Printf("hotfix/ branch %s fails validation.  jgitflow would have preserved hotfix name case in POM <version> %s and retained uses of '-'.\n", branchName, effectivePOMVersion)
-			Log.Printf("See https://xoomcorp.atlassian.net/wiki/display/Eng/branchcheck%3A++A+tool+for+feature+branch+developers\n")
+			Log.Printf("See https://confluence.xoom.com/x/NIInAw\n")
 		}
 		return validates
 	}
