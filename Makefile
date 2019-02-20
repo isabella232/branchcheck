@@ -1,6 +1,6 @@
 NAME := branchcheck
 ARCH := amd64
-VERSION := v1.7.1
+VERSION := 1.7.1
 DATE := $(shell date)
 COMMIT_ID := $(shell git rev-parse --short HEAD)
 SDK_INFO := $(shell go version)
